@@ -1,4 +1,4 @@
-Currently supports bit wise XOR (based on 5 bit ASCII) and base 5 mod 26 addition of two strings.
+Currently supports bit wise AND, OR, NOT, NAND, NOR and XOR (based on 5 bit ASCII) and base 5 mod 26 addition of two strings.
 Able to calculate IoC (English), transpose, reverse, convert to Morse, and the inversed morse ("OBRK = "SJRK") on single strings.
 Further tools to come.
 
