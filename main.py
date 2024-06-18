@@ -45,25 +45,28 @@ def get_morse_code():
         'Y': '-.--', 'Z': '--..', ' ': ' '
     }
     result = {}
+    morse_code = ''
     total_dots = 0
     total_dashes = 0
     for char in input.upper():
         if char in morse_dict:
-            morse_code = morse_dict[char]
-            dots = morse_code.count('.')
-            dashes = morse_code.count('-')
+            morse_code += morse_dict[char] + ' '
+            dots = morse_dict[char].count('.')
+            dashes = morse_dict[char].count('-')
             result[char] = f"{dots} dots, {dashes} dashes"
             total_dots += dots
             total_dashes += dashes
         else:
             result[char] = 'Invalid character'
-    out.insert("1.0", f"\nDots: {total_dots}, Dashes:{total_dashes}")
+            morse_code += 'Invalid character '
+
+    out.insert("1.0", f"\n{morse_code.strip()}\nDots: {total_dots}, Dashes: {total_dashes}")
 
 def shift_string():
     input = input_text.get("1.0", 'end-1c')
     shifted = ""
     shift_amounts = [1, 2, 3, 4, 5, 1, 2, 3, 4]
-    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" #"KRYPTOSABCDEFGHIJLMNQUVWXZ"
+    alphabet = "KRYPTOSABCDEFGHIJLMNQUVWXZ" #"ABCDEFGHIJKLMNOPQRSTUVWXYZ" #
     for i, c in enumerate(input):
         if c.isupper():
             shift = shift_amounts[i % len(shift_amounts)]
@@ -72,7 +75,7 @@ def shift_string():
             shifted += shifted_char
         else:
             shifted += c
-    out.insert("1.0", f"\nShifted by 5: {shifted}")
+    out.insert("1.0", f"\nShifted by 5 positions:\n{shifted}")
 
 def ioc():
     input = input_text.get("1.0", 'end-1c')
@@ -92,7 +95,7 @@ def ioc():
     else:
         ic = num / (den * (den - 1))
 
-    out.insert("1.0", f"\nIoC of {input}: {ic:.4f}")
+    out.insert("1.0", f"\n{input}\nIoC (English): {ic:.4f}")
 
 def reverse():
     input = input_text.get("1.0", 'end-1c')
@@ -244,11 +247,11 @@ button.grid(row=5, column=1, pady=5)
 button_base5 = Button(layer_2_frame, text="Base 5 Addition", command = base5_addition)
 button_base5.grid(row=5, column=2, pady=5)
 
-button_reverse = Button(one_string_operation_frame, text="Reverse", command = reverse)
-button_reverse.grid(row=3, column=0, pady=5)
-
 ioc_button = Button(one_string_operation_frame, text="IoC", command = ioc)
-ioc_button.grid(row=3, column=1, pady=5)
+ioc_button.grid(row=3, column=0, pady=5)
+
+button_reverse = Button(one_string_operation_frame, text="Reverse", command = reverse)
+button_reverse.grid(row=3, column=1, pady=5)
 
 shift_string_button = Button(one_string_operation_frame, text="Transpose", command = shift_string)
 shift_string_button.grid(row=3, column=2, pady=5)
@@ -261,8 +264,6 @@ morse_button.grid(row=3, column=4, pady=5)
 
 clear_button = Button(output_frame, text="Clear", command = clear_output)
 clear_button.grid(row=2, column=0, pady=5)
-
-
 
 root.mainloop()
 
