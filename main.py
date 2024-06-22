@@ -104,18 +104,21 @@ def reverse():
 
 def transposition():
     input = input_text.get("1.0", 'end-1c')
-    step = -5
-    alphabets = "KRYPTOSABCDEFGHIJLNQUVWXZ"
-    alph2 = alphabets.upper() 
+    step = int(shift.get())
+    alphabet = input_alphabet.get("1.0", 'end-1c')
+    
+    alphabet = alphabet.upper()
+    shifted_str = ""
+    for char in input:
+        if char.isalpha():
+            index = alphabet.index(char.upper())
+            shifted_index = (index + step) % len(alphabet)
+            shifted_str += alphabet[shifted_index].lower() if char.islower() else alphabet[shifted_index]
+        else:
+            shifted_str += char
 
-    # lower case translation table
-    t = str.maketrans(alphabets, alphabets[-step:]+alphabets[:-step])
-    # upper case translation table
-    t2 = str.maketrans(alph2, alph2[-step:]+alph2[:-step])
     # merge both translation tables
-    t.update(t2)
-    result = input.translate(t)
-    out.insert("1.0", f"\n{result}")
+    out.insert("1.0", f"\n{shifted_str}")
 
 def boolean_operations():
     op = operation.get()
@@ -215,6 +218,17 @@ input_label.grid(row=0, column=0, padx=5)
 input_text = Text(one_string_operation_frame, height=3, width=50, font=("Cambria", 8))
 input_text.grid(row=1, column=0, padx=5, columnspan= 8)
 
+alphabet_label = Label(one_string_operation_frame, text="Alphabet")
+alphabet_label.grid(row=4, column=0, padx=5)
+
+input_alphabet = Text(one_string_operation_frame, height=3, width=50, font=("Cambria", 8))
+input_alphabet.grid(row=5, column=0, padx=5, columnspan= 8)
+
+shift_values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10 , 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+shift = IntVar()
+operation_combobox = OptionMenu(one_string_operation_frame, shift, *shift_values)
+operation_combobox.grid(row=6, column=1)
+
 layer_2_frame = LabelFrame(root, text="Two String Manipulation")
 layer_2_frame.grid(row= 0, column=1, padx=5, pady=5)
 
@@ -253,14 +267,14 @@ ioc_button.grid(row=3, column=0, pady=5)
 button_reverse = Button(one_string_operation_frame, text="Reverse", command = reverse)
 button_reverse.grid(row=3, column=1, pady=5)
 
-shift_string_button = Button(one_string_operation_frame, text="Transpose", command = shift_string)
-shift_string_button.grid(row=3, column=2, pady=5)
+shift_string_button = Button(one_string_operation_frame, text="Transpose", command = transposition)
+shift_string_button.grid(row=6, column=0, pady=5)
 
 morse_button = Button(one_string_operation_frame, text="Morse", command = get_morse_code)
-morse_button.grid(row=3, column=3, pady=5)
+morse_button.grid(row=3, column=2, pady=5)
 
 morse_button = Button(one_string_operation_frame, text="Invert Morse", command = convert_to_opposite_morse)
-morse_button.grid(row=3, column=4, pady=5)
+morse_button.grid(row=3, column=3, pady=5)
 
 clear_button = Button(output_frame, text="Clear", command = clear_output)
 clear_button.grid(row=2, column=0, pady=5)
