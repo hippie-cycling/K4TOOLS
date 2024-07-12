@@ -13,7 +13,7 @@ Conversion to Morse code.
 Conversion and translation of inversed morse ("OBKR = "SJRK").
 
 **VIGENERE BRUTE FORCE ATTACK**
-Using a large dictionary of english words, it loops through them until "BERLINCLOCK" "EASTNORTH" or "NORTEAST" is found on the plaintext.
+Using a large dictionary of english words, it loops through them until "BERLINCLOCK" "EASTNORTH" or "NORTHEAST" is found on the plaintext.
 The vigenere alphabet can be inputed.
 
 Useful strings.txt for quick copy paste into the GUI.
