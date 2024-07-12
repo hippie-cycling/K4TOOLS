@@ -7,9 +7,13 @@ Base 5 mod 26 addition of two strings.
 
 **Single string calculations:**
 IoC (English).
-Transposition (TODO: define what alphabet at step)
+Transposition.
 Reversion.
 Conversion to Morse code.
 Conversion and translation of inversed morse ("OBKR = "SJRK").
+
+**VIGENERE BRUTE FORCE ATTACK**
+Using a large dictionary of english words, it loops through them until "BERLINCLOCK" "EASTNORTH" or "NORTEAST" is found on the plaintext.
+The vigenere alphabet can be inputed.
 
 Useful strings.txt for quick copy paste into the GUI.
