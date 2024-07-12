@@ -17,10 +17,10 @@ class CryptoToolGUI:
         
         # Single input widgets
         self.input_text = self.create_text_widget(self.single_input_frame, "Input", 1, 0)
-        self.alphabet_text = self.create_text_widget(self.single_input_frame, "Alphabet", 3, 0)
+        self.alphabet_text = self.create_text_widget(self.single_input_frame, "Alphabet", 4, 0)
         
         self.shift = tk.IntVar()
-        self.create_dropdown(self.single_input_frame, "Shift", self.shift, range(1, 27), 5, 0)
+        self.create_dropdown(self.single_input_frame, "Shift", self.shift, range(1, 27), 6, 0)
         
         # Double input widgets
         self.input1_text = self.create_text_widget(self.double_input_frame, "Input 1", 1, 0)
@@ -28,18 +28,16 @@ class CryptoToolGUI:
         
         self.operation = tk.StringVar()
         self.create_dropdown(self.double_input_frame, "Operation", self.operation, 
-                            ["AND", "OR", "NOT", "NAND", "NOR", "XOR"], 5, 0)
+                            ["AND", "OR", "NOT", "NAND", "NOR", "XOR"], 6, 0)
 
         # Output frame
-        self.output_frame = self.create_labeled_frame("Output", 1, 0, columnspan=3)
-        self.output_text = self.create_text_widget(self.output_frame, "", 0, 0, 
-                                                height=8, width=100, bg="#88C0D0", 
-                                                font=("Cambria", 10))
+        self.output_frame = self.create_labeled_frame("Output", 1, 0, columnspan=4)
+        self.output_text = self.create_text_widget(self.output_frame, "", 0, 0, font=("Cambria", 10))
 
         # Buttons
         self.create_button(self.single_input_frame, "IoC", self.ioc, 2, 0)
         self.create_button(self.single_input_frame, "Reverse", self.reverse, 2, 1)
-        self.create_button(self.single_input_frame, "Transpose", self.transposition, 5, 1)
+        self.create_button(self.single_input_frame, "Transpose", self.transposition, 6, 1)
         self.create_button(self.single_input_frame, "Morse", self.get_morse_code, 2, 2)
         self.create_button(self.single_input_frame, "Invert Morse", self.convert_to_opposite_morse, 2, 3)
         
@@ -49,15 +47,15 @@ class CryptoToolGUI:
         self.create_button(self.output_frame, "Clear", self.clear_output, 1, 0)
 
                 # New Vigenère Cipher frame
-        self.vigenere_frame = self.create_labeled_frame("Vigenère Cipher Cracking", 0, 3)
+        self.vigenere_frame = self.create_labeled_frame("Vigenère Cipher Brute Force", 0, 3)
         self.vigenere_cipher_text = self.create_text_widget(self.vigenere_frame, "Ciphertext", 1, 0)
-        self.vigenere_alphabet = self.create_text_widget(self.vigenere_frame, "Alphabet", 2, 0)
-        self.create_button(self.vigenere_frame, "Crack Vigenère", self.crack_vigenere, 3, 0)
+        self.vigenere_alphabet = self.create_text_widget(self.vigenere_frame, "Alphabet", 3, 0)
+        self.create_button(self.vigenere_frame, "Attack", self.crack_vigenere, 4, 0)
 
         # Progress bar
         self.progress_var = tk.DoubleVar()
         self.progress_bar = ttk.Progressbar(self.vigenere_frame, variable=self.progress_var, maximum=100)
-        self.progress_bar.grid(row=4, column=0, columnspan=2, padx=5, pady=5, sticky='ew')
+        self.progress_bar.grid(row=4, column=1, columnspan=2, padx=5, pady=5, sticky='ew')
 
     def decrypt_vigenere(self, ciphertext, key):
         plaintext = ""
