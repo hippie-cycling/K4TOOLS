@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
+import time
+import threading
 
 class CryptoToolGUI:
     def __init__(self, master):
@@ -29,10 +31,10 @@ class CryptoToolGUI:
                             ["AND", "OR", "NOT", "NAND", "NOR", "XOR"], 5, 0)
 
         # Output frame
-        self.output_frame = self.create_labeled_frame("Output", 1, 0, columnspan=2)
+        self.output_frame = self.create_labeled_frame("Output", 1, 0, columnspan=3)
         self.output_text = self.create_text_widget(self.output_frame, "", 0, 0, 
-                                                height=20, width=100, bg="#88C0D0", 
-                                                font=("Cambria", 12))
+                                                height=8, width=100, bg="#88C0D0", 
+                                                font=("Cambria", 10))
 
         # Buttons
         self.create_button(self.single_input_frame, "IoC", self.ioc, 2, 0)
@@ -45,6 +47,83 @@ class CryptoToolGUI:
         self.create_button(self.double_input_frame, "Base 5 Addition", self.base5_addition, 5, 2)
         
         self.create_button(self.output_frame, "Clear", self.clear_output, 1, 0)
+
+                # New Vigenère Cipher frame
+        self.vigenere_frame = self.create_labeled_frame("Vigenère Cipher Cracking", 0, 3)
+        self.vigenere_cipher_text = self.create_text_widget(self.vigenere_frame, "Ciphertext", 1, 0)
+        self.vigenere_alphabet = self.create_text_widget(self.vigenere_frame, "Alphabet", 2, 0)
+        self.create_button(self.vigenere_frame, "Crack Vigenère", self.crack_vigenere, 3, 0)
+
+        # Progress bar
+        self.progress_var = tk.DoubleVar()
+        self.progress_bar = ttk.Progressbar(self.vigenere_frame, variable=self.progress_var, maximum=100)
+        self.progress_bar.grid(row=4, column=0, columnspan=2, padx=5, pady=5, sticky='ew')
+
+    def decrypt_vigenere(self, ciphertext, key):
+        plaintext = ""
+        key_length = len(key)
+        alphabet = self.vigenere_alphabet.get("1.0", 'end-1c').upper()
+        
+        for i, char in enumerate(ciphertext):
+            if char == '?':
+                plaintext += '?'
+            elif char in alphabet:
+                key_char = key[i % key_length]
+                if key_char in alphabet:
+                    shift = alphabet.index(key_char)
+                    char_index = alphabet.index(char)
+                    decrypted_char = alphabet[(char_index - shift) % len(alphabet)]
+                    plaintext += decrypted_char
+                else:
+                    plaintext += char
+            else:
+                plaintext += char
+        
+        return plaintext
+
+    def load_dictionary(self, file_path):
+        alphabet = set(self.vigenere_alphabet.get("1.0", 'end-1c').upper())
+        with open(file_path, 'r') as file:
+            return [word.strip().upper() for word in file if set(word.strip().upper()).issubset(alphabet)]
+
+    def crack_vigenere(self):
+        ciphertext = self.vigenere_cipher_text.get("1.0", 'end-1c').upper()
+        
+        def crack_thread():
+            start_time = time.time()
+            attempts = 0
+            
+            try:
+                dictionary = self.load_dictionary("words_alpha.txt")
+            except FileNotFoundError:
+                self.output_text.insert("1.0", "\nError: words_alpha.txt not found. Please ensure the file is in the same directory as the script.")
+                return
+
+            total_words = len(dictionary)
+            
+            for i, key in enumerate(dictionary):
+                attempts += 1
+                plaintext = self.decrypt_vigenere(ciphertext, key)
+                
+                if "BERLINCLOCK" in plaintext or "EASTNORTH" in plaintext or "NORTHEAST" in plaintext:
+                    end_time = time.time()
+                    result = f"\nCracked! Key: {key}\n"
+                    result += f"Attempts: {attempts}\n"
+                    result += f"Time taken: {end_time - start_time:.2f} seconds\n"
+                    result += f"Plaintext: {plaintext}\n"
+                    self.output_text.insert("1.0", result)
+                    return
+                
+                if attempts % 100 == 0:
+                    self.progress_var.set((i / total_words) * 100)
+                    self.master.update_idletasks()
+            
+            end_time = time.time()
+            result = f"\nUnable to crack. Attempts: {attempts}\n"
+            result += f"Time taken: {end_time - start_time:.2f} seconds\n"
+            self.output_text.insert("1.0", result)
+
+        threading.Thread(target=crack_thread).start()
 
     def create_labeled_frame(self, text, row, column, **kwargs):
         frame = ttk.LabelFrame(self.master, text=text)
@@ -224,3 +303,5 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = CryptoToolGUI(root)
     root.mainloop()
+
+
