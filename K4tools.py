@@ -103,7 +103,7 @@ class CryptoToolGUI:
                 attempts += 1
                 plaintext = self.decrypt_vigenere(ciphertext, key)
                 
-                if "BERLINCLOCK" in plaintext or "EASTNORTH" in plaintext or "NORTHEAST" in plaintext:
+                if "BERLINCLOCK" in plaintext or "EASTNORTH" in plaintext or "NORTHEAST" in plaintext or "NILREB" in plaintext:
                     end_time = time.time()
                     result = f"\nCracked! Key: {key}\n"
                     result += f"Attempts: {attempts}\n"
@@ -164,13 +164,23 @@ class CryptoToolGUI:
             'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
             'Y': '-.--', 'Z': '--..'}
 
-        morse_input = ''.join(morse_dict.get(char, '') + ' ' for char in input_text.upper())
-        inverted_morse = ''.join('.' if char == '-' else '-' if char == '.' else char for char in morse_input)
+        def invert_morse(code):
+            return ''.join('.' if char == '-' else '-' if char == '.' else char for char in code)
 
-        reverse_morse_dict = {v: k for k, v in morse_dict.items()}
-        output = ''.join(reverse_morse_dict.get(code, ' ') for code in inverted_morse.split())
+        output = ''
+        for char in input_text.upper():
+            if char in morse_dict:
+                inverted_code = invert_morse(morse_dict[char])
+                for letter, code in morse_dict.items():
+                    if code == inverted_code:
+                        output += letter
+                        break
+                else:
+                    output += char  # If no matching inverted code, keep original char
+            else:
+                output += char  # Keep non-letter characters as is
 
-        self.output_text.insert("1.0", f"\nReversed Morse: {output.strip()}")
+        self.output_text.insert("1.0", f"\nReversed Morse: {output}")
 
     def get_morse_code(self):
         input_text = self.input_text.get("1.0", 'end-1c')
@@ -281,7 +291,7 @@ class CryptoToolGUI:
         dictionary = self.input2_text.get("1.0", 'end-1c')
 
         base5_dict = {chr(65+i): f'{i//5}{i%5}' for i in range(26)}
-        base5_dict['W'] = '00'  # Special case for 'W'
+        base5_dict['X'] = '00'  # Special case for 'W'
 
         num1 = ''.join(base5_dict[char] for char in cypher.upper() if char in base5_dict)
         num2 = ''.join(base5_dict[char] for char in dictionary.upper() if char in base5_dict)
