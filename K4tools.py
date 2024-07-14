@@ -34,7 +34,7 @@ class CryptoToolGUI:
 
         # Output frame
         self.output_frame = self.create_labeled_frame("Output", 1, 0, columnspan=4)
-        self.output_text = self.create_text_widget(self.output_frame, "", 0, 0, font=("Hack NF", 8), width=135, height=15)
+        self.output_text = self.create_text_widget(self.output_frame, "", 0, 0, font=("Hack NF", 8), width=135, height=20)
 
         # Buttons
         self.create_button(self.single_input_frame, "IoC", self.ioc, 2, 0)
@@ -66,13 +66,13 @@ class CryptoToolGUI:
 
     def create_text_widget(self, parent, label_text, row, column, **kwargs):
         if label_text:
-            ttk.Label(parent, text=label_text, font=("Cambria", 10)).grid(row=row-1, column=column, padx=5)
+            ttk.Label(parent, text=label_text, font=("Hack NF", 10)).grid(row=row-1, column=column, padx=5)
         
         # Default values
         default_kwargs = {
             'height': 5,  # Increased height
             'width': 50,
-            'font': ("Cambria", 10)  # Increased font size
+            'font': ("Hack NF", 10)  # Increased font size
         }
         # Update default values with any provided kwargs
         default_kwargs.update(kwargs)
@@ -123,6 +123,7 @@ class CryptoToolGUI:
             return [word.strip().upper() for word in file 
                     if set(word.strip().upper()).issubset(alphabet_set) and len(word) > 2]
 
+    
     def crack_vigenere(self):
         ciphertext = self.vigenere_cipher_text.get("1.0", 'end-1c').upper()
         
@@ -137,22 +138,25 @@ class CryptoToolGUI:
                 return
 
             total_words = len(dictionary)
-            target_phrases = {"BERLINCLOCK", "EASTNORTH", "NORTHEAST", "NILREB", "BETWEEN"}
+            target_phrases = {"BERLINCLOCK", "EASTNORTH", "NORTHEAST", "NILREB", "TSAEHTRON", "LOOKING"}
             
             for i, key in enumerate(dictionary):
                 attempts += 1
                 plaintext = self.decrypt_vigenere(ciphertext, key)
                 
-                if any(phrase in plaintext for phrase in target_phrases):
-                    end_time = time.time()
-                    result = f"\nCracked! Key: {key}\n"
-                    result += f"Attempts: {attempts}\n"
-                    result += f"Time taken: {end_time - start_time:.2f} seconds\n"
-                    result += f"Plaintext: {plaintext}\n"
-                    self.output_text.insert("1.0", result)
-                    return
+                for phrase in target_phrases:
+                    if phrase in plaintext:
+                        end_time = time.time()
+                        highlighted_plaintext = self.highlight_match(plaintext, phrase)
+                        result = f"\nCracked! Key: {key}\n"
+                        result += f"Attempts: {attempts}\n"
+                        result += f"Time taken: {end_time - start_time:.2f} seconds\n"
+                        result += f"Found match: {phrase}\n"
+                        result += f"Plaintext: {highlighted_plaintext}\n"
+                        self.output_text.insert("1.0", result)
+                        return
                 
-                if attempts % 1000 == 0:  # Updated from 100 to 1000
+                if attempts % 1000 == 0:
                     self.progress_var.set((i / total_words) * 100)
                     self.master.update_idletasks()
             
@@ -162,6 +166,11 @@ class CryptoToolGUI:
             self.output_text.insert("1.0", result)
 
         threading.Thread(target=crack_thread).start()
+
+    def highlight_match(self, text, phrase):
+        start = text.index(phrase)
+        end = start + len(phrase)
+        return f"{text[:start]}**{text[start:end]}**{text[end:]}"
 
     def create_labeled_frame(self, text, row, column, **kwargs):
         frame = ttk.LabelFrame(self.master, text=text)
