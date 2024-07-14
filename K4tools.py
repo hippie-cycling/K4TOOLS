@@ -2,16 +2,18 @@ import tkinter as tk
 from tkinter import ttk
 import time
 import threading
+from functools import lru_cache
 
 class CryptoToolGUI:
     def __init__(self, master):
         self.master = master
         master.title("K4 toolkit")
-
+        self.alphabet = None
+        self.alphabet_dict = None
         self.create_widgets()
 
     def create_widgets(self):
-    # Input frames
+        # Input frames
         self.single_input_frame = self.create_labeled_frame("Single Input Operations", 0, 0)
         self.double_input_frame = self.create_labeled_frame("Double Input Operations", 0, 1)
         
@@ -32,7 +34,7 @@ class CryptoToolGUI:
 
         # Output frame
         self.output_frame = self.create_labeled_frame("Output", 1, 0, columnspan=4)
-        self.output_text = self.create_text_widget(self.output_frame, "", 0, 0, font=("Cambria", 10))
+        self.output_text = self.create_text_widget(self.output_frame, "", 0, 0, font=("Hack NF", 8), width=135, height=15)
 
         # Buttons
         self.create_button(self.single_input_frame, "IoC", self.ioc, 2, 0)
@@ -46,7 +48,7 @@ class CryptoToolGUI:
         
         self.create_button(self.output_frame, "Clear", self.clear_output, 1, 0)
 
-                # New Vigenère Cipher frame
+        # New Vigenère Cipher frame
         self.vigenere_frame = self.create_labeled_frame("Vigenère Cipher Brute Force", 0, 3)
         self.vigenere_cipher_text = self.create_text_widget(self.vigenere_frame, "Ciphertext", 1, 0)
         self.vigenere_alphabet = self.create_text_widget(self.vigenere_frame, "Alphabet", 3, 0)
@@ -57,32 +59,69 @@ class CryptoToolGUI:
         self.progress_bar = ttk.Progressbar(self.vigenere_frame, variable=self.progress_var, maximum=100)
         self.progress_bar.grid(row=4, column=1, columnspan=2, padx=5, pady=5, sticky='ew')
 
+    def create_labeled_frame(self, text, row, column, **kwargs):
+        frame = ttk.LabelFrame(self.master, text=text)
+        frame.grid(row=row, column=column, padx=5, **kwargs)
+        return frame
+
+    def create_text_widget(self, parent, label_text, row, column, **kwargs):
+        if label_text:
+            ttk.Label(parent, text=label_text, font=("Cambria", 10)).grid(row=row-1, column=column, padx=5)
+        
+        # Default values
+        default_kwargs = {
+            'height': 5,  # Increased height
+            'width': 50,
+            'font': ("Cambria", 10)  # Increased font size
+        }
+        # Update default values with any provided kwargs
+        default_kwargs.update(kwargs)
+        
+        text_widget = tk.Text(parent, **default_kwargs)
+        text_widget.grid(row=row, column=column, padx=5, columnspan=8, sticky='nsew')
+        return text_widget
+
+    def create_dropdown(self, parent, label_text, variable, values, row, column):
+        ttk.Label(parent, text=label_text, font=("Cambria", 10)).grid(row=row-1, column=column, padx=5)
+        ttk.OptionMenu(parent, variable, values[0], *values).grid(row=row, column=column)
+
+    def create_button(self, parent, text, command, row, column):
+        ttk.Button(parent, text=text, command=command).grid(row=row, column=column, pady=5)
+
+    @lru_cache(maxsize=None)
+    def get_alphabet(self):
+        if self.alphabet is None:
+            self.alphabet = self.vigenere_alphabet.get("1.0", 'end-1c').upper()
+            self.alphabet_dict = {char: i for i, char in enumerate(self.alphabet)}
+        return self.alphabet, self.alphabet_dict
+
     def decrypt_vigenere(self, ciphertext, key):
-        plaintext = ""
+        alphabet, alphabet_dict = self.get_alphabet()
         key_length = len(key)
-        alphabet = self.vigenere_alphabet.get("1.0", 'end-1c').upper()
+        alphabet_length = len(alphabet)
         
+        key_shifts = [alphabet_dict[k] for k in key if k in alphabet_dict]
+        if not key_shifts:
+            return ciphertext
+
+        plaintext = []
         for i, char in enumerate(ciphertext):
-            if char == '?':
-                plaintext += '?'
-            elif char in alphabet:
-                key_char = key[i % key_length]
-                if key_char in alphabet:
-                    shift = alphabet.index(key_char)
-                    char_index = alphabet.index(char)
-                    decrypted_char = alphabet[(char_index - shift) % len(alphabet)]
-                    plaintext += decrypted_char
-                else:
-                    plaintext += char
+            if char in alphabet_dict:
+                shift = key_shifts[i % len(key_shifts)]
+                char_index = alphabet_dict[char]
+                decrypted_char = alphabet[(char_index - shift) % alphabet_length]
+                plaintext.append(decrypted_char)
             else:
-                plaintext += char
+                plaintext.append(char)
         
-        return plaintext
+        return ''.join(plaintext)
 
     def load_dictionary(self, file_path):
-        alphabet = set(self.vigenere_alphabet.get("1.0", 'end-1c').upper())
+        alphabet, _ = self.get_alphabet()
+        alphabet_set = set(alphabet)
         with open(file_path, 'r') as file:
-            return [word.strip().upper() for word in file if set(word.strip().upper()).issubset(alphabet)]
+            return [word.strip().upper() for word in file 
+                    if set(word.strip().upper()).issubset(alphabet_set) and len(word) > 2]
 
     def crack_vigenere(self):
         ciphertext = self.vigenere_cipher_text.get("1.0", 'end-1c').upper()
@@ -98,12 +137,13 @@ class CryptoToolGUI:
                 return
 
             total_words = len(dictionary)
+            target_phrases = {"BERLINCLOCK", "EASTNORTH", "NORTHEAST", "NILREB", "BETWEEN"}
             
             for i, key in enumerate(dictionary):
                 attempts += 1
                 plaintext = self.decrypt_vigenere(ciphertext, key)
                 
-                if "BERLINCLOCK" in plaintext or "EASTNORTH" in plaintext or "NORTHEAST" in plaintext or "NILREB" in plaintext:
+                if any(phrase in plaintext for phrase in target_phrases):
                     end_time = time.time()
                     result = f"\nCracked! Key: {key}\n"
                     result += f"Attempts: {attempts}\n"
@@ -112,7 +152,7 @@ class CryptoToolGUI:
                     self.output_text.insert("1.0", result)
                     return
                 
-                if attempts % 100 == 0:
+                if attempts % 1000 == 0:  # Updated from 100 to 1000
                     self.progress_var.set((i / total_words) * 100)
                     self.master.update_idletasks()
             
