@@ -3,6 +3,8 @@ from tkinter import ttk
 import time
 import threading
 from functools import lru_cache
+import re
+from collections import Counter
 
 class CryptoToolGUI:
     def __init__(self, master):
@@ -11,6 +13,9 @@ class CryptoToolGUI:
         self.alphabet = None
         self.alphabet_dict = None
         self.create_widgets()
+    
+    def setup_text_tags(self):
+        self.output_text.tag_configure("highlight", background="yellow", foreground="black")
 
     def create_widgets(self):
         # Input frames
@@ -43,6 +48,9 @@ class CryptoToolGUI:
         self.create_button(self.single_input_frame, "Morse", self.get_morse_code, 2, 2)
         self.create_button(self.single_input_frame, "Invert Morse", self.convert_to_opposite_morse, 2, 3)
         self.create_button(self.single_input_frame, "String Matrix", self.process_string, 2, 4)
+        self.create_button(self.single_input_frame, "Frequency Analysis", self.analyze_frequency, 2, 5)
+
+        self.setup_text_tags()
         
         self.create_button(self.double_input_frame, "Calculate", self.boolean_operations, 5, 1)
         self.create_button(self.double_input_frame, "Base 5 Addition", self.base5_addition, 5, 2)
@@ -282,6 +290,19 @@ class CryptoToolGUI:
 
         self.output_text.insert("1.0", f"\nReversed Morse: {output}")
 
+    def setup_text_tags(self):
+        self.output_text.tag_configure("highlight", background="yellow", foreground="black")
+
+    def analyze_frequency(self):
+        analyzer = LetterFrequencyAnalyzer()
+        input_text = self.input_text.get("1.0", 'end-1c').upper()
+        result, is_close_match = analyzer.analyze_text(input_text)
+        
+        self.output_text.delete('1.0', tk.END)  # Clear previous output
+        if is_close_match:
+            self.output_text.insert("1.0", "POTENTIAL MATCH FOUND!\n", "highlight")
+        self.output_text.insert(tk.END, result)
+
     def process_string(self):
         input_text = self.input_text.get("1.0", 'end-1c')
         # Function to get all divisors of a number
@@ -435,6 +456,48 @@ class CryptoToolGUI:
     def clear_output(self):
         self.output_text.delete("1.0", tk.END)
 
+class LetterFrequencyAnalyzer:
+    def __init__(self):
+        self.english_freq = {
+            'E': 12.7, 'T': 9.1, 'A': 8.2, 'O': 7.5, 'I': 7.0, 'N': 6.7, 'S': 6.3, 
+            'H': 6.1, 'R': 6.0, 'L': 4.0, 'D': 4.3, 'C': 2.8, 'U': 2.8, 'M': 2.4, 
+            'W': 2.4, 'F': 2.2, 'G': 2.0, 'Y': 2.0, 'P': 1.9, 'B': 1.5, 'V': 1.0, 
+            'K': 0.8, 'J': 0.2, 'X': 0.2, 'Q': 0.1, 'Z': 0.1
+        }
+
+    def calculate_frequency(self, text):
+        text = re.sub(r'[^A-Z]', '', text.upper())
+        total_chars = len(text)
+        char_counts = Counter(text)
+        return {char: (count / total_chars) * 100 for char, count in char_counts.items()}
+
+    def compare_frequency(self, input_freq):
+        diff_sum = 0
+        for char, freq in self.english_freq.items():
+            input_freq_char = input_freq.get(char, 0)
+            diff_sum += abs(freq - input_freq_char)
+        return diff_sum / len(self.english_freq)
+
+    def analyze_text(self, text, threshold=2.0):
+        input_freq = self.calculate_frequency(text)
+        diff = self.compare_frequency(input_freq)
+        is_close_match = diff < threshold
+        
+        result = f"Frequency analysis results:\n"
+        result += f"{'Character':<10}{'English %':<10}{'Input %':<10}{'Difference':<10}\n"
+        for char in sorted(self.english_freq.keys()):
+            eng_freq = self.english_freq[char]
+            inp_freq = input_freq.get(char, 0)
+            diff = abs(eng_freq - inp_freq)
+            result += f"{char:<10}{eng_freq:<10.2f}{inp_freq:<10.2f}{diff:<10.2f}\n"
+        
+        result += f"\nOverall difference: {diff:.2f}\n"
+        if is_close_match:
+            result += "This text closely matches English letter frequency."
+        else:
+            result += "This text does not closely match English letter frequency."
+        
+        return result, is_close_match
 
 if __name__ == "__main__":
     root = tk.Tk()
