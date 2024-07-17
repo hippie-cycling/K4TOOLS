@@ -42,6 +42,7 @@ class CryptoToolGUI:
         self.create_button(self.single_input_frame, "Transpose", self.transposition, 6, 1)
         self.create_button(self.single_input_frame, "Morse", self.get_morse_code, 2, 2)
         self.create_button(self.single_input_frame, "Invert Morse", self.convert_to_opposite_morse, 2, 3)
+        self.create_button(self.single_input_frame, "String Matrix", self.process_string, 2, 4)
         
         self.create_button(self.double_input_frame, "Calculate", self.boolean_operations, 5, 1)
         self.create_button(self.double_input_frame, "Base 5 Addition", self.base5_addition, 5, 2)
@@ -53,11 +54,12 @@ class CryptoToolGUI:
         self.vigenere_cipher_text = self.create_text_widget(self.vigenere_frame, "Ciphertext", 1, 0)
         self.vigenere_alphabet = self.create_text_widget(self.vigenere_frame, "Alphabet", 3, 0)
         self.create_button(self.vigenere_frame, "Attack", self.crack_vigenere, 4, 0)
-
+        self.create_button(self.vigenere_frame, "Attack with IoC", self.crack_vigenere_with_ioc, 4, 1)
+        
         # Progress bar
         self.progress_var = tk.DoubleVar()
         self.progress_bar = ttk.Progressbar(self.vigenere_frame, variable=self.progress_var, maximum=100)
-        self.progress_bar.grid(row=4, column=1, columnspan=2, padx=5, pady=5, sticky='ew')
+        self.progress_bar.grid(row=4, column=2, columnspan=2, padx=5, pady=5, sticky='ew')
 
     def create_labeled_frame(self, text, row, column, **kwargs):
         frame = ttk.LabelFrame(self.master, text=text)
@@ -201,8 +203,57 @@ class CryptoToolGUI:
     def create_button(self, parent, text, command, row, column):
         ttk.Button(parent, text=text, command=command).grid(row=row, column=column, pady=5)
 
-    # Implement your crypto functions here (ioc, reverse, transposition, etc.)
-    # Make sure to update them to use self.input_text, self.output_text, etc.
+    def crack_vigenere_with_ioc(self):
+        ciphertext = self.vigenere_cipher_text.get("1.0", 'end-1c').upper()
+        
+        def calculate_ioc(text):
+            char_counts = {}
+            for char in text:
+                if char.isalpha():
+                    char_counts[char] = char_counts.get(char, 0) + 1
+            
+            n = sum(char_counts.values())
+            numerator = sum(count * (count - 1) for count in char_counts.values())
+            denominator = n * (n - 1)
+            return numerator / denominator if denominator != 0 else 0
+
+        def crack_thread():
+            start_time = time.time()
+            attempts = 0
+            
+            try:
+                dictionary = self.load_dictionary("words_alpha.txt")
+            except FileNotFoundError:
+                self.output_text.insert("1.0", "\nError: words_alpha.txt not found. Please ensure the file is in the same directory as the script.")
+                return
+
+            total_words = len(dictionary)
+            
+            for i, key in enumerate(dictionary):
+                attempts += 1
+                plaintext = self.decrypt_vigenere(ciphertext, key)
+                ioc_value = calculate_ioc(plaintext)
+                
+                if 0.055 <= ioc_value <= 0.07:
+                    end_time = time.time()
+                    result = f"\nPotential match found!\n"
+                    result += f"Key: {key}\n"
+                    result += f"Attempts: {attempts}\n"
+                    result += f"Time taken: {end_time - start_time:.2f} seconds\n"
+                    result += f"IoC: {ioc_value:.4f}\n"
+                    result += f"Plaintext: {plaintext}\n\n"
+                    self.output_text.insert("1.0", result)
+                
+                if attempts % 1000 == 0:
+                    self.progress_var.set((i / total_words) * 100)
+                    self.master.update_idletasks()
+            
+            end_time = time.time()
+            result = f"\nProcess completed. Total attempts: {attempts}\n"
+            result += f"Total time taken: {end_time - start_time:.2f} seconds\n"
+            self.output_text.insert("1.0", result)
+
+        threading.Thread(target=crack_thread).start()
 
     def convert_to_opposite_morse(self):
         input_text = self.input_text.get("1.0", 'end-1c')
@@ -230,6 +281,35 @@ class CryptoToolGUI:
                 output += char  # Keep non-letter characters as is
 
         self.output_text.insert("1.0", f"\nReversed Morse: {output}")
+
+    def process_string(self):
+        input_text = self.input_text.get("1.0", 'end-1c')
+        # Function to get all divisors of a number
+        def get_divisors(n):
+            return [i for i in range(1, n + 1) if n % i == 0]
+
+        # Function to divide string into n parts
+        def divide_string(s, n):
+            return [s[i:i+n] for i in range(0, len(s), n)]
+
+        # Function to transpose a list of strings
+        def transpose(lst):
+            return [''.join(x) for x in zip(*lst)]
+
+        length = len(input_text)
+        divisors = get_divisors(length)
+
+        self.output_text.insert("1.0", f"Input string: {input_text}")
+        self.output_text.insert("1.0", f"Length: {length}")
+        self.output_text.insert("1.0", f"Divisors: {divisors}\n")
+
+        for divisor in divisors:
+            divided = divide_string(input_text, length // divisor)
+            transposed = transpose(divided)
+            result = ''.join(transposed)
+
+            self.output_text.insert("1.0", f"\nDivided into: {divisor}")
+            self.output_text.insert("1.0", f"\nTransposed and joined result: {result}")
 
     def get_morse_code(self):
         input_text = self.input_text.get("1.0", 'end-1c')
