@@ -13,9 +13,6 @@ class CryptoToolGUI:
         self.alphabet = None
         self.alphabet_dict = None
         self.create_widgets()
-    
-    def setup_text_tags(self):
-        self.output_text.tag_configure("highlight", background="yellow", foreground="black")
 
     def create_widgets(self):
         # Input frames
@@ -39,7 +36,7 @@ class CryptoToolGUI:
 
         # Output frame
         self.output_frame = self.create_labeled_frame("Output", 1, 0, columnspan=4)
-        self.output_text = self.create_text_widget(self.output_frame, "", 0, 0, font=("Hack NF", 8), width=135, height=20)
+        self.output_text = self.create_text_widget(self.output_frame, "", 0, 0, font=("Hack NF", 8), width=150, height=20)
 
         # Buttons
         self.create_button(self.single_input_frame, "IoC", self.ioc, 2, 0)
@@ -132,7 +129,6 @@ class CryptoToolGUI:
         with open(file_path, 'r') as file:
             return [word.strip().upper() for word in file 
                     if set(word.strip().upper()).issubset(alphabet_set) and len(word) > 2]
-
     
     def crack_vigenere(self):
         ciphertext = self.vigenere_cipher_text.get("1.0", 'end-1c').upper()
@@ -180,7 +176,7 @@ class CryptoToolGUI:
     def highlight_match(self, text, phrase):
         start = text.index(phrase)
         end = start + len(phrase)
-        return f"{text[:start]}**{text[start:end]}**{text[end:]}"
+        return f"{text[:start]}*{text[start:end]}*{text[end:]}"
 
     def create_labeled_frame(self, text, row, column, **kwargs):
         frame = ttk.LabelFrame(self.master, text=text)
@@ -297,11 +293,10 @@ class CryptoToolGUI:
         analyzer = LetterFrequencyAnalyzer()
         input_text = self.input_text.get("1.0", 'end-1c').upper()
         result, is_close_match = analyzer.analyze_text(input_text)
-        
-        self.output_text.delete('1.0', tk.END)  # Clear previous output
+        self.output_text.insert("1.0", result)
         if is_close_match:
-            self.output_text.insert("1.0", "POTENTIAL MATCH FOUND!\n", "highlight")
-        self.output_text.insert(tk.END, result)
+            self.output_text.insert("1.0", "\nPOTENTIAL MATCH FOUND!\n", "highlight")
+        
 
     def process_string(self):
         input_text = self.input_text.get("1.0", 'end-1c')
