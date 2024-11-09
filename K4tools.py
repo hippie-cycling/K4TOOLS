@@ -144,7 +144,7 @@ class CryptoToolGUI:
                 return
 
             total_words = len(dictionary)
-            target_phrases = {"BERLINCLOCK", "EASTNORTH", "NORTHEAST", "NILREB", "TSAEHTRON", "LOOKING"}
+            target_phrases = {"BERLINCLOCK", "EASTNORTH", "NORTHEAST", "NILREB", "TSAEHTRON", "LOOKING", "CLOCK"}
             
             for i, key in enumerate(dictionary):
                 attempts += 1
@@ -395,7 +395,7 @@ class CryptoToolGUI:
         'K': '01011', 'L': '01100', 'M': '01101', 'N': '01110', 'O': '01111',
         'P': '10000', 'Q': '10001', 'R': '10010', 'S': '10011', 'T': '10100',
         'U': '10101', 'V': '10110', 'W': '10111', 'X': '11000', 'Y': '11001',
-        'Z': '11010'
+        'Z': '11010', '?': '11111'
     }
         reverse_ascii_dict = {v: k for k, v in ascii_dict.items()}
 
