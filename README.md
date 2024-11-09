@@ -28,11 +28,11 @@ A variety of commonly used string analysis and manipulation is supported:
 
 ## Vigenère Brute Force attacks
 
-Using a large dictionary of English words (words_alpha.txt), it will brute force until one of the input plain text words **USE CAPS**  is found on the plaintext.
+Using a large dictionary of English words (words_alpha.txt), it will brute force until one of the input plain text words (**USE CAPS**)  is found on the plaintext.
 
 The vigenère alphabet can be defined by the user.
 
-The brute force succesfully decripts, for example, K2.
+The brute force succesfully decripts, for example, K2 in under 4 seconds.
 
 	K2: EMUFPHZLRFAXYUSDJKZLDKRNSHGNFIVJYQTQUXQBQVYUVLLTREVJYQTMKYRDMFD
 	Alphabet: KRYPTOSABCDEFGHIJLMNQUVWXZ
@@ -43,7 +43,9 @@ The brute force succesfully decripts, for example, K2.
 			Found match: SHADING
 			Plaintext: BETWEENSUBTLE*SHADING*ANDTHEABSENCEOFLIGHTLIESTHENUANCEOFIQLUSION
 	
+A brute force based on IoC is also implemented, if the string is close to the ENglish IoC, it will be output for further analysis.
+
 **Useful strings** (strings.txt) contains relevant strings for quick copy paste into the GUI.
 
 ## Ideas are welcomed!
-The GUI is a work in progress, Do you have an idea or suggestion? Feel free to contact me so it can be implemented.
+The GUI is a work in progress, do you have an idea or suggestion? Feel free to contact me so it can be implemented.
