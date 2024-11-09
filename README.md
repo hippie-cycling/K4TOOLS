@@ -43,7 +43,7 @@ The brute force succesfully decripts, for example, K2 in under 4 seconds.
 			Found match: SHADING
 			Plaintext: BETWEENSUBTLE*SHADING*ANDTHEABSENCEOFLIGHTLIESTHENUANCEOFIQLUSION
 	
-A brute force based on IoC is also implemented, if the string is close to the ENglish IoC, it will be output for further analysis.
+A brute force based on IoC is also implemented, if the string is close to the English IoC (between 0.055 and 0.07), it will be output for further analysis. (The values can be tweeked in the K4TOOLS.py crack_thread function.)
 
 **Useful strings** (strings.txt) contains relevant strings for quick copy paste into the GUI.
 
