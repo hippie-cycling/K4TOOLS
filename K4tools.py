@@ -53,18 +53,30 @@ class CryptoToolGUI:
         self.create_button(self.double_input_frame, "Base 5 Addition", self.base5_addition, 5, 2)
         
         self.create_button(self.output_frame, "Clear", self.clear_output, 1, 0)
-
-        # New Vigenère Cipher frame
+        
+        # New Vigenère Cipher frame with target phrases
         self.vigenere_frame = self.create_labeled_frame("Vigenère Cipher Brute Force", 0, 3)
         self.vigenere_cipher_text = self.create_text_widget(self.vigenere_frame, "Ciphertext", 1, 0)
         self.vigenere_alphabet = self.create_text_widget(self.vigenere_frame, "Alphabet", 3, 0)
-        self.create_button(self.vigenere_frame, "Attack", self.crack_vigenere, 4, 0)
-        self.create_button(self.vigenere_frame, "Attack with IoC", self.crack_vigenere_with_ioc, 4, 1)
+        # Add new field for target phrases
+        self.target_phrases_text = self.create_text_widget(
+            self.vigenere_frame, 
+            "Target Plaintext (comma-separated)", 
+            5, 
+            0, 
+            height=2
+        )
+        # Set default target phrases
+        default_phrases = "BERLINCLOCK,EASTNORTH,NORTHEAST,CLOCK,NILREB,TSAEHTRON"
+        self.target_phrases_text.insert("1.0", default_phrases)
+
+        self.create_button(self.vigenere_frame, "Attack", self.crack_vigenere, 6, 0)
+        self.create_button(self.vigenere_frame, "Attack with IoC", self.crack_vigenere_with_ioc, 6, 1)
         
         # Progress bar
         self.progress_var = tk.DoubleVar()
         self.progress_bar = ttk.Progressbar(self.vigenere_frame, variable=self.progress_var, maximum=100)
-        self.progress_bar.grid(row=4, column=2, columnspan=2, padx=5, pady=5, sticky='ew')
+        self.progress_bar.grid(row=6, column=2, columnspan=2, padx=5, pady=5, sticky='ew')
 
     def create_labeled_frame(self, text, row, column, **kwargs):
         frame = ttk.LabelFrame(self.master, text=text)
@@ -143,9 +155,12 @@ class CryptoToolGUI:
                 self.output_text.insert("1.0", "\nError: words_alpha.txt not found. Please ensure the file is in the same directory as the script.")
                 return
 
-            total_words = len(dictionary)
-            target_phrases = {"BERLINCLOCK", "EASTNORTH", "NORTHEAST", "NILREB", "TSAEHTRON", "LOOKING", "CLOCK"}
+            # Get target phrases from input
+            target_phrases_text = self.target_phrases_text.get("1.0", 'end-1c').strip()
+            target_phrases = {phrase.strip().upper() for phrase in target_phrases_text.split(',')}
             
+            total_words = len(dictionary)
+
             for i, key in enumerate(dictionary):
                 attempts += 1
                 plaintext = self.decrypt_vigenere(ciphertext, key)
@@ -154,7 +169,7 @@ class CryptoToolGUI:
                     if phrase in plaintext:
                         end_time = time.time()
                         highlighted_plaintext = self.highlight_match(plaintext, phrase)
-                        result = f"\nCracked! Key: {key}\n"
+                        result = f"\nFOund a match! Key: {key}\n"
                         result += f"Attempts: {attempts}\n"
                         result += f"Time taken: {end_time - start_time:.2f} seconds\n"
                         result += f"Found match: {phrase}\n"
@@ -297,7 +312,6 @@ class CryptoToolGUI:
         if is_close_match:
             self.output_text.insert("1.0", "\nPOTENTIAL MATCH FOUND!\n", "highlight")
         
-
     def process_string(self):
         input_text = self.input_text.get("1.0", 'end-1c')
         # Function to get all divisors of a number
