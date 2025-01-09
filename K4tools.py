@@ -78,6 +78,15 @@ class CryptoToolGUI:
         self.progress_bar = ttk.Progressbar(self.vigenere_frame, variable=self.progress_var, maximum=100)
         self.progress_bar.grid(row=6, column=2, columnspan=2, padx=5, pady=5, sticky='ew')
 
+        # Add new buttons after the existing Calculate button in double_input_frame
+        self.create_button(self.double_input_frame, "XOR Brute Force (IoC)", self.xor_bruteforce_ioc, 5, 3)
+        self.create_button(self.double_input_frame, "XOR Brute Force (Freq)", self.xor_bruteforce_freq, 5, 4)
+        
+        # Add progress bar for brute force operations
+        self.bf_progress_var = tk.DoubleVar()
+        self.bf_progress_bar = ttk.Progressbar(self.double_input_frame, variable=self.bf_progress_var, maximum=100)
+        self.bf_progress_bar.grid(row=7, column=0, columnspan=4, padx=5, pady=5, sticky='ew')
+
     def create_labeled_frame(self, text, row, column, **kwargs):
         frame = ttk.LabelFrame(self.master, text=text)
         frame.grid(row=row, column=column, padx=5, **kwargs)
@@ -464,6 +473,143 @@ class CryptoToolGUI:
 
     def clear_output(self):
         self.output_text.delete("1.0", tk.END)
+    
+    #################  Added Brute Forcers  #########################
+
+    def calculate_ioc(self, text):
+        char_counts = {}
+        for char in text:
+            if char.isalpha():
+                char_counts[char] = char_counts.get(char, 0) + 1
+        
+        n = sum(char_counts.values())
+        if n <= 1:
+            return 0
+        
+        numerator = sum(count * (count - 1) for count in char_counts.values())
+        denominator = n * (n - 1)
+        return numerator / denominator if denominator != 0 else 0
+
+    def xor_operation(self, text1, text2):
+            ascii_dict = {
+                'A': '00001', 'B': '00010', 'C': '00011', 'D': '00100', 'E': '00101',
+                'F': '00110', 'G': '00111', 'H': '01000', 'I': '01001', 'J': '01010',
+                'K': '01011', 'L': '01100', 'M': '01101', 'N': '01110', 'O': '01111',
+                'P': '10000', 'Q': '10001', 'R': '10010', 'S': '10011', 'T': '10100',
+                'U': '10101', 'V': '10110', 'W': '10111', 'X': '11000', 'Y': '11001',
+                'Z': '11010', '?': '11111'
+            }
+            reverse_ascii_dict = {v: k for k, v in ascii_dict.items()}
+
+            # Repeat text2 to match the length of text1
+            repetitions = (len(text1) + len(text2) - 1) // len(text2)
+            repeated_text2 = (text2 * repetitions)[:len(text1)]
+
+            # Convert to binary
+            binary1 = ''.join(ascii_dict.get(char, '00000') for char in text1)
+            binary2 = ''.join(ascii_dict.get(char, '00000') for char in repeated_text2)
+
+            # Perform XOR
+            result_binary = ''.join('1' if bit1 != bit2 else '0' 
+                                for bit1, bit2 in zip(binary1, binary2))
+
+            # Convert back to text with special handling for 00000 and 11111
+            result_text = ''
+            for i in range(0, len(result_binary), 5):
+                chunk = result_binary[i:i+5]
+                if chunk == '00000' or chunk == '11111':
+                    # Use the original character from input1
+                    original_chunk = binary1[i:i+5]
+                    result_text += next(key for key, value in ascii_dict.items() if value == original_chunk)
+                elif chunk in ascii_dict.values():
+                    result_text += reverse_ascii_dict[chunk]
+                else:
+                    # If we get an invalid chunk, use the original character from input1
+                    original_chunk = binary1[i:i+5]
+                    result_text += next(key for key, value in ascii_dict.items() if value == original_chunk)
+
+            return result_text
+
+    def xor_bruteforce_ioc(self):
+        def bruteforce_thread():
+            input_text = self.input1_text.get("1.0", 'end-1c').upper()
+            
+            try:
+                with open("words_alpha.txt", 'r') as file:
+                    words = [word.strip().upper() for word in file]
+            except FileNotFoundError:
+                self.output_text.insert("1.0", "\nError: words_alpha.txt not found!")
+                return
+
+            total_words = len(words)
+            matches_found = 0
+            
+            self.output_text.insert("1.0", "\nStarting IoC-based XOR brute force...\n")
+            for i, word in enumerate(words):
+                if len(word) >= 3:  # Skip very short words
+                    # Calculate repeated key correctly
+                    repetitions = (len(input_text) + len(word) - 1) // len(word)
+                    repeated_key = (word * repetitions)[:len(input_text)]
+                    
+                    result = self.xor_operation(input_text, word)
+                    ioc = self.calculate_ioc(result)
+                    
+                    if 0.055 <= ioc <= 0.07:
+                        matches_found += 1
+                        self.output_text.insert("1.0", f"\nMatch found with key: {word}")
+                        self.output_text.insert("1.0", f"\nKey repeated: {repeated_key}")
+                        self.output_text.insert("1.0", f"\nResult: {result}")
+                        self.output_text.insert("1.0", f"\nIoC: {ioc:.4f}\n")
+                
+                if i % 100 == 0:
+                    self.bf_progress_var.set((i / total_words) * 100)
+                    self.master.update_idletasks()
+            
+            self.output_text.insert("1.0", f"\nBrute force completed. Found {matches_found} matches.\n")
+            self.bf_progress_var.set(100)
+
+        threading.Thread(target=bruteforce_thread).start()
+
+    def xor_bruteforce_freq(self):
+        def bruteforce_thread():
+            input_text = self.input1_text.get("1.0", 'end-1c').upper()
+            analyzer = LetterFrequencyAnalyzer()
+            
+            try:
+                with open("words_alpha.txt", 'r') as file:
+                    words = [word.strip().upper() for word in file]
+            except FileNotFoundError:
+                self.output_text.insert("1.0", "\nError: words_alpha.txt not found!")
+                return
+
+            total_words = len(words)
+            matches_found = 0
+            
+            self.output_text.insert("1.0", "\nStarting frequency analysis-based XOR brute force...\n")
+            for i, word in enumerate(words):
+                if len(word) >= 3:  # Skip very short words
+                    # Calculate repeated key correctly
+                    repetitions = (len(input_text) + len(word) - 1) // len(word)
+                    repeated_key = (word * repetitions)[:len(input_text)]
+                    
+                    result = self.xor_operation(input_text, word)
+                    result_analysis, is_close_match = analyzer.analyze_text(result)
+                    
+                    if is_close_match:
+                        matches_found += 1
+                        self.output_text.insert("1.0", f"\nMatch found with key: {word}")
+                        self.output_text.insert("1.0", f"\nKey repeated: {repeated_key}")
+                        self.output_text.insert("1.0", f"\nResult: {result}")
+                        self.output_text.insert("1.0", f"\n{result_analysis}\n")
+                
+                if i % 100 == 0:
+                    self.bf_progress_var.set((i / total_words) * 100)
+                    self.master.update_idletasks()
+            
+            self.output_text.insert("1.0", f"\nBrute force completed. Found {matches_found} matches.\n")
+            self.bf_progress_var.set(100)
+
+        threading.Thread(target=bruteforce_thread).start()
 
 class LetterFrequencyAnalyzer:
     def __init__(self):
