@@ -12,83 +12,223 @@ class CryptoToolGUI:
         master.title("K4 toolkit")
         self.alphabet = None
         self.alphabet_dict = None
-        self.create_widgets()
 
-    def create_widgets(self):
-        # Input frames
-        self.single_input_frame = self.create_labeled_frame("Single Input Operations", 0, 0)
-        self.double_input_frame = self.create_labeled_frame("Double Input Operations", 0, 1)
-        
-        # Single input widgets
-        self.input_text = self.create_text_widget(self.single_input_frame, "Input", 1, 0)
-        self.alphabet_text = self.create_text_widget(self.single_input_frame, "Alphabet", 4, 0)
-        
-        self.shift = tk.IntVar()
-        self.create_dropdown(self.single_input_frame, "Shift", self.shift, range(1, 27), 6, 0)
-        
-        # Double input widgets
-        self.input1_text = self.create_text_widget(self.double_input_frame, "Input 1", 1, 0)
-        self.input2_text = self.create_text_widget(self.double_input_frame, "Input 2", 3, 0)
-        
-        self.operation = tk.StringVar()
-        self.create_dropdown(self.double_input_frame, "Operation", self.operation, 
-                            ["AND", "OR", "NOT", "NAND", "NOR", "XOR"], 6, 0)
+        # Create menu bar
+        self.menubar = tk.Menu(master)
+        master.config(menu=self.menubar)
 
-        # Output frame
-        self.output_frame = self.create_labeled_frame("Output", 1, 0, columnspan=4)
-        self.output_text = self.create_text_widget(self.output_frame, "", 0, 0, font=("Hack NF", 8), width=150, height=20)
+        # Create Operations menu
+        self.operations_menu = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label="String Operations", menu=self.operations_menu)
 
-        # Buttons
-        self.create_button(self.single_input_frame, "IoC", self.ioc, 2, 0)
-        self.create_button(self.single_input_frame, "Reverse", self.reverse, 2, 1)
-        self.create_button(self.single_input_frame, "Transpose", self.transposition, 6, 1)
-        self.create_button(self.single_input_frame, "Morse", self.get_morse_code, 2, 2)
-        self.create_button(self.single_input_frame, "Invert Morse", self.convert_to_opposite_morse, 2, 3)
-        self.create_button(self.single_input_frame, "String Matrix", self.process_string, 2, 4)
-        self.create_button(self.single_input_frame, "Frequency Analysis", self.analyze_frequency, 2, 5)
+        # Create Vigenere menu
+        self.vigenere_menu = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label="Vigenere Tools", menu=self.vigenere_menu)
 
+            # Create About menu
+        self.about_menu = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label="About", menu=self.about_menu)
+        self.about_menu.add_command(label="About K4 Tools", command=self.show_about)
+
+        # Create windows for different operations
+        self.single_double_window = None
+        self.vigenere_window = None
+
+        # Add menu items
+        self.operations_menu.add_command(label="Single/Double Input Operations", 
+                                       command=self.show_single_double_operations)
+        self.vigenere_menu.add_command(label="Vigenere Brute Force", 
+                                      command=self.show_vigenere_operations)
+
+        # Create main output frame
+        self.output_frame = ttk.LabelFrame(self.master, text="Output")
+        self.output_frame.grid(row=0, column=0, padx=5, pady=5, sticky='nsew')
+        
+        self.output_text = self.create_text_widget(self.output_frame, "", 0, 0, 
+                                                 font=("Hack NF", 8), width=120, height=30)
+        
         self.setup_text_tags()
-        
-        self.create_button(self.double_input_frame, "Calculate", self.boolean_operations, 5, 1)
-        self.create_button(self.double_input_frame, "Base 5 Addition", self.base5_addition, 5, 2)
-        
-        self.create_button(self.output_frame, "Clear", self.clear_output, 1, 0)
-        
-        # New Vigenère Cipher frame with target phrases
-        self.vigenere_frame = self.create_labeled_frame("Vigenère Cipher Brute Force", 0, 3)
-        self.vigenere_cipher_text = self.create_text_widget(self.vigenere_frame, "Ciphertext", 1, 0)
-        self.vigenere_alphabet = self.create_text_widget(self.vigenere_frame, "Alphabet", 3, 0)
-        # Add new field for target phrases
-        self.target_phrases_text = self.create_text_widget(
-            self.vigenere_frame, 
-            "Target Plaintext (comma-separated)", 
-            5, 
-            0, 
-            height=2
-        )
-        # Set default target phrases
-        default_phrases = "BERLINCLOCK,EASTNORTH,NORTHEAST,CLOCK,NILREB,TSAEHTRON"
-        self.target_phrases_text.insert("1.0", default_phrases)
 
-        self.create_button(self.vigenere_frame, "Attack", self.crack_vigenere, 6, 0)
-        self.create_button(self.vigenere_frame, "Attack with IoC", self.crack_vigenere_with_ioc, 6, 1)
+    def show_about(self):
+        about_window = tk.Toplevel(self.master)
+        about_window.title("About K4 Tools")
+        about_window.geometry("400x300")
         
-        # Progress bar
-        self.progress_var = tk.DoubleVar()
-        self.progress_bar = ttk.Progressbar(self.vigenere_frame, variable=self.progress_var, maximum=100)
-        self.progress_bar.grid(row=6, column=2, columnspan=2, padx=5, pady=5, sticky='ew')
-
-        # Add new buttons after the existing Calculate button in double_input_frame
-        self.create_button(self.double_input_frame, "XOR Brute Force (IoC)", self.xor_bruteforce_ioc, 5, 3)
-        self.create_button(self.double_input_frame, "XOR Brute Force (Freq)", self.xor_bruteforce_freq, 5, 4)
+        about_text = f"""K4 is being developed by Daniel Navarro aka HippieCycling. 
+        \nFor contact please reach out to navarro.leiva.daniel@gmail.com.
+        \nhttps://github.com/hippie-cycling"""
         
-        # Add progress bar for brute force operations
-        self.bf_progress_var = tk.DoubleVar()
-        self.bf_progress_bar = ttk.Progressbar(self.double_input_frame, variable=self.bf_progress_var, maximum=100)
-        self.bf_progress_bar.grid(row=7, column=0, columnspan=4, padx=5, pady=5, sticky='ew')
+        label = ttk.Label(about_window, text=about_text, wraplength=350, justify='left')
+        label.pack(padx=20, pady=20)
 
-    def create_labeled_frame(self, text, row, column, **kwargs):
-        frame = ttk.LabelFrame(self.master, text=text)
+
+    def show_single_double_operations(self):
+        if self.single_double_window is None or not self.single_double_window.winfo_exists():
+            self.single_double_window = tk.Toplevel(self.master)
+            self.single_double_window.title("Single/Double Input Operations")
+            
+            # Single input frame
+            self.single_input_frame = self.create_labeled_frame(self.single_double_window, 
+                                                              "Single Input Operations", 0, 0)
+            self.input_text = self.create_text_widget(self.single_input_frame, "Cyphertext", 1, 0)
+            self.alphabet_text = self.create_text_widget(self.single_input_frame, "Alphabet", 4, 0)
+            
+            # Set default cypher
+            self.input_text.insert("1.0", "OBKRUOXOGHULBSOLIFBBWFLRVQQPRNGKSSOTWTQSJQSSEKZZWATJKLUDIAWINFBNYPVTTMZFPKWGDKZXTJCDIGKUHUAUEKCAR")
+            # Set default alphabet
+            self.alphabet_text.insert("1.0", "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+            self.shift = tk.IntVar()
+            self.create_dropdown(self.single_input_frame, "Shift", self.shift, range(1, 27), 6, 0)
+            
+            # Double input frame
+            self.double_input_frame = self.create_labeled_frame(self.single_double_window, 
+                                                              "Double Input Operations", 0, 1)
+            self.input1_text = self.create_text_widget(self.double_input_frame, "Input 1", 1, 0)
+            self.input2_text = self.create_text_widget(self.double_input_frame, "Input 2", 3, 0)
+            
+            self.operation = tk.StringVar()
+            self.create_dropdown(self.double_input_frame, "Operation", self.operation, 
+                               ["AND", "OR", "NOT", "NAND", "NOR", "XOR"], 6, 0)
+
+            # Create buttons
+            self.create_button(self.single_input_frame, "IoC", self.ioc, 2, 0)
+            self.create_button(self.single_input_frame, "Reverse", self.reverse, 2, 1)
+            self.create_button(self.single_input_frame, "Transpose", self.transposition, 6, 1)
+            self.create_button(self.single_input_frame, "Morse", self.get_morse_code, 2, 2)
+            self.create_button(self.single_input_frame, "Invert Morse", self.convert_to_opposite_morse, 2, 3)
+            self.create_button(self.single_input_frame, "String Matrix", self.process_string, 2, 4)
+            self.create_button(self.single_input_frame, "Frequency Analysis", self.analyze_frequency, 2, 5)
+
+            self.create_button(self.double_input_frame, "Calculate", self.boolean_operations, 5, 1)
+            self.create_button(self.double_input_frame, "Base 5 Addition", self.base5_addition, 5, 2)
+            self.create_button(self.double_input_frame, "XOR Brute Force (IoC)", self.xor_bruteforce_ioc, 5, 3)
+            self.create_button(self.double_input_frame, "XOR Brute Force (Freq)", self.xor_bruteforce_freq, 5, 4)
+
+            # Add progress bar
+            self.bf_progress_var = tk.DoubleVar()
+            self.bf_progress_bar = ttk.Progressbar(self.double_input_frame, 
+                                                 variable=self.bf_progress_var, maximum=100)
+            self.bf_progress_bar.grid(row=7, column=0, columnspan=4, padx=5, pady=5, sticky='ew')
+
+    def show_vigenere_operations(self):
+        if self.vigenere_window is None or not self.vigenere_window.winfo_exists():
+            self.vigenere_window = tk.Toplevel(self.master)
+            self.vigenere_window.title("Vigenere Brute Force")
+            
+            # Create Vigenere frame
+            self.vigenere_frame = self.create_labeled_frame(self.vigenere_window, 
+                                                          "Vigenère Cipher Brute Force", 0, 0)
+            
+            # Create text widgets with increased width and height
+            self.vigenere_cipher_text = self.create_text_widget(
+                self.vigenere_frame, 
+                "Ciphertext", 
+                1, 
+                0,
+                width=100,  
+                height=4,   
+                font=("Hack NF", 8)
+            )
+            
+            self.vigenere_alphabet = self.create_text_widget(
+                self.vigenere_frame, 
+                "Alphabet (can be changed)", 
+                3, 
+                0,
+                width=100,
+                height=4,   
+                font=("Hack NF", 8)
+            )
+            
+            # Set default cypher
+            self.vigenere_cipher_text.insert("1.0", "OBKRUOXOGHULBSOLIFBBWFLRVQQPRNGKSSOTWTQSJQSSEKZZWATJKLUDIAWINFBNYPVTTMZFPKWGDKZXTJCDIGKUHUAUEKCAR")
+
+            # Set default alphabet
+            self.vigenere_alphabet.insert("1.0", "KRYPTOSABCDEFGHIJLMNQUVWXZ")
+            
+            self.target_phrases_text = self.create_text_widget(
+                self.vigenere_frame, 
+                "Target Plaintext (comma-separated)", 
+                5, 
+                0,
+                width=100,
+                height=4,   
+                font=("Hack NF", 8)
+            )
+            
+            # Set default target phrases
+            default_phrases = "BERLINCLOCK,EASTNORTH,NORTHEAST,CLOCK,NILREB,TSAEHTRON"
+            self.target_phrases_text.insert("1.0", default_phrases)
+
+            # Create larger buttons with bigger font and tooltips
+            ttk.Style().configure('Large.TButton', font=('Hack NF', 10))
+            
+            # Add attack buttons and IoC range in same row
+            attack_btn = ttk.Button(self.vigenere_frame, text="Attack", 
+                                  command=self.crack_vigenere, 
+                                  style='Large.TButton')
+            attack_btn.grid(row=6, column=0, pady=10)
+            
+            attack_ioc_btn = ttk.Button(self.vigenere_frame, text="Attack with IoC", 
+                                      command=self.crack_vigenere_with_ioc, 
+                                      style='Large.TButton')
+            attack_ioc_btn.grid(row=6, column=1, pady=10)
+
+            # IoC range entries next to Attack with IoC button
+            ttk.Label(self.vigenere_frame, text="Min IoC:").grid(row=6, column=2, padx=5)
+            self.min_ioc = tk.StringVar(value="0.06")
+            ttk.Entry(self.vigenere_frame, textvariable=self.min_ioc, width=10).grid(row=6, column=3, padx=5)
+            
+            ttk.Label(self.vigenere_frame, text="Max IoC:").grid(row=6, column=4, padx=5)
+            self.max_ioc = tk.StringVar(value="0.07")
+            ttk.Entry(self.vigenere_frame, textvariable=self.max_ioc, width=10).grid(row=6, column=5, padx=5)
+
+            # Create tooltips
+            attack_tooltip = tk.Label(self.vigenere_frame, 
+                                    text="The function will go through every word in the dictionary and output any matches.",
+                                    bg="white", relief="solid", borderwidth=1)
+            attack_ioc_tooltip = tk.Label(self.vigenere_frame,
+                                        text="The function will go through every word in the dictionary and output any match to the defined IoC range.",
+                                        bg="white", relief="solid", borderwidth=1)
+
+            def show_tooltip(event, tooltip):
+                tooltip.lift()
+                tooltip.place(x=event.x_root - self.vigenere_window.winfo_rootx(), 
+                            y=event.y_root - self.vigenere_window.winfo_rooty())
+
+            def hide_tooltip(event, tooltip):
+                tooltip.place_forget()
+
+            # Bind tooltip events
+            attack_btn.bind("<Enter>", lambda e: show_tooltip(e, attack_tooltip))
+            attack_btn.bind("<Leave>", lambda e: hide_tooltip(e, attack_tooltip))
+            attack_ioc_btn.bind("<Enter>", lambda e: show_tooltip(e, attack_ioc_tooltip))
+            attack_ioc_btn.bind("<Leave>", lambda e: hide_tooltip(e, attack_ioc_tooltip))
+
+            # Add dictionary selection frame
+            self.dict_frame = self.create_labeled_frame(self.vigenere_window, 
+                                                      "Dictionary Selection", 1, 0)
+            
+            # Create radio buttons for dictionary selection
+            self.dict_var = tk.StringVar(value="words_alpha.txt")  # default value
+            ttk.Radiobutton(self.dict_frame, text="Dictionary (words_alpha.txt)", 
+                          variable=self.dict_var, value="words_alpha.txt").grid(row=0, column=0, padx=5)
+            ttk.Radiobutton(self.dict_frame, text="Full Dictionary (words.txt)", 
+                          variable=self.dict_var, value="words.txt").grid(row=0, column=1, padx=5)
+
+            # Add progress bar
+            self.progress_var = tk.DoubleVar()
+            self.progress_bar = ttk.Progressbar(
+                self.vigenere_window,
+                variable=self.progress_var, 
+                maximum=100,
+                length=100
+            )
+            self.progress_bar.grid(row=3, column=0, columnspan=4, padx=10, pady=10, sticky='ew')
+
+    def create_labeled_frame(self, parent, text, row, column, **kwargs):
+        frame = ttk.LabelFrame(parent, text=text)
         frame.grid(row=row, column=column, padx=5, **kwargs)
         return frame
 
@@ -100,7 +240,7 @@ class CryptoToolGUI:
         default_kwargs = {
             'height': 5,  # Increased height
             'width': 50,
-            'font': ("Hack NF", 10)  # Increased font size
+            'font': ("Hack NF", 8)  # Increased font size
         }
         # Update default values with any provided kwargs
         default_kwargs.update(kwargs)
@@ -125,7 +265,7 @@ class CryptoToolGUI:
 
     def decrypt_vigenere(self, ciphertext, key):
         alphabet, alphabet_dict = self.get_alphabet()
-        key_length = len(key)
+        # Removed unused variable
         alphabet_length = len(alphabet)
         
         key_shifts = [alphabet_dict[k] for k in key if k in alphabet_dict]
@@ -159,9 +299,10 @@ class CryptoToolGUI:
             attempts = 0
             
             try:
-                dictionary = self.load_dictionary("words_alpha.txt")
+                selected_dict = self.dict_var.get()  # Get selected dictionary file
+                dictionary = self.load_dictionary(selected_dict)
             except FileNotFoundError:
-                self.output_text.insert("1.0", "\nError: words_alpha.txt not found. Please ensure the file is in the same directory as the script.")
+                self.output_text.insert("1.0", "\nError: dictionary not found. Please ensure the file is in the same directory as the script.")
                 return
 
             # Get target phrases from input
@@ -178,7 +319,7 @@ class CryptoToolGUI:
                     if phrase in plaintext:
                         end_time = time.time()
                         highlighted_plaintext = self.highlight_match(plaintext, phrase)
-                        result = f"\nFOund a match! Key: {key}\n"
+                        result = f"\nFound a match! Key: {key}\n"
                         result += f"Attempts: {attempts}\n"
                         result += f"Time taken: {end_time - start_time:.2f} seconds\n"
                         result += f"Found match: {phrase}\n"
@@ -202,35 +343,6 @@ class CryptoToolGUI:
         end = start + len(phrase)
         return f"{text[:start]}*{text[start:end]}*{text[end:]}"
 
-    def create_labeled_frame(self, text, row, column, **kwargs):
-        frame = ttk.LabelFrame(self.master, text=text)
-        frame.grid(row=row, column=column, padx=5, **kwargs)
-        return frame
-
-    def create_text_widget(self, parent, label_text, row, column, **kwargs):
-        if label_text:
-            ttk.Label(parent, text=label_text).grid(row=row-1, column=column, padx=5)
-        
-        # Default values
-        default_kwargs = {
-            'height': 3,
-            'width': 50,
-            'font': ("Cambria", 8)
-        }
-        # Update default values with any provided kwargs
-        default_kwargs.update(kwargs)
-        
-        text_widget = tk.Text(parent, **default_kwargs)
-        text_widget.grid(row=row, column=column, padx=5, columnspan=8, sticky='nsew')
-        return text_widget
-
-    def create_dropdown(self, parent, label_text, variable, values, row, column):
-        ttk.Label(parent, text=label_text).grid(row=row-1, column=column, padx=5)
-        ttk.OptionMenu(parent, variable, values[0], *values).grid(row=row, column=column)
-
-    def create_button(self, parent, text, command, row, column):
-        ttk.Button(parent, text=text, command=command).grid(row=row, column=column, pady=5)
-
     def crack_vigenere_with_ioc(self):
         ciphertext = self.vigenere_cipher_text.get("1.0", 'end-1c').upper()
         
@@ -250,9 +362,10 @@ class CryptoToolGUI:
             attempts = 0
             
             try:
-                dictionary = self.load_dictionary("words_alpha.txt")
+                selected_dict = self.dict_var.get()  # Get selected dictionary file
+                dictionary = self.load_dictionary(selected_dict)
             except FileNotFoundError:
-                self.output_text.insert("1.0", "\nError: words_alpha.txt not found. Please ensure the file is in the same directory as the script.")
+                self.output_text.insert("1.0", "\nError: dictionary not found. Please ensure the file is in the same directory as the script.")
                 return
 
             total_words = len(dictionary)
@@ -262,7 +375,9 @@ class CryptoToolGUI:
                 plaintext = self.decrypt_vigenere(ciphertext, key)
                 ioc_value = calculate_ioc(plaintext)
                 
-                if 0.055 <= ioc_value <= 0.07:
+                min_ioc_val = float(self.min_ioc.get())
+                max_ioc_val = float(self.max_ioc.get())
+                if min_ioc_val <= ioc_value <= max_ioc_val:
                     end_time = time.time()
                     result = f"\nPotential match found!\n"
                     result += f"Key: {key}\n"
@@ -400,7 +515,10 @@ class CryptoToolGUI:
         denominator = n * (n - 1)
         ic = numerator / denominator if denominator != 0 else 0
 
-        self.output_text.insert("1.0", f"\n{input_text}\nIoC (English): {ic:.4f}")
+        self.output_text.insert("1.0", f"\n{input_text}")
+        if 0.059 <= ic <= 0.07:
+            self.output_text.insert("1.0", "\nPOTENTIAL ENGLISH TEXT DETECTED!", "highlight")
+        self.output_text.insert("1.0", f"\nIoC (English): {ic:.4f} \nTarget: 0.0667")
 
     def reverse(self):
         input_text = self.input_text.get("1.0", 'end-1c')
@@ -420,7 +538,7 @@ class CryptoToolGUI:
         'U': '10101', 'V': '10110', 'W': '10111', 'X': '11000', 'Y': '11001',
         'Z': '11010', '?': '11111'
     }
-        reverse_ascii_dict = {v: k for k, v in ascii_dict.items()}
+        # Convert ascii_dict to use directly in the loop below
 
         # Convert the input strings to binary
         binary1 = ''.join(ascii_dict[char] for char in cypher)
@@ -638,25 +756,60 @@ class LetterFrequencyAnalyzer:
         diff = self.compare_frequency(input_freq)
         is_close_match = diff < threshold
         
-        result = f"Frequency analysis results:\n"
-        result += f"{'Character':<10}{'English %':<10}{'Input %':<10}{'Difference':<10}\n"
+        # Create new window for results
+        results_window = tk.Toplevel()
+        results_window.title("Frequency Analysis Results")
+        
+        # Create treeview for table
+        # Create frame to hold treeview and scrollbar
+        frame = ttk.Frame(results_window)
+        frame.pack(padx=10, pady=10, fill='both', expand=True)
+        
+        # Create scrollbar first
+        scrollbar = ttk.Scrollbar(frame, orient='vertical')
+        scrollbar.pack(side='right', fill='y')
+
+        # Create treeview
+        tree = ttk.Treeview(frame, columns=('char', 'eng_freq', 'input_freq', 'diff'), 
+                           show='headings', yscrollcommand=scrollbar.set)
+        tree.pack(side='left', fill='both', expand=True)
+        
+        # Configure scrollbar
+        scrollbar.config(command=tree.yview)
+        
+        # Define column headers
+        tree.heading('char', text='Character')
+        tree.heading('eng_freq', text='English %')
+        tree.heading('input_freq', text='Input %')
+        tree.heading('diff', text='Difference')
+        
+        # Set column widths
+        for col in tree['columns']:
+            tree.column(col, width=100)
+            
+        # Add data rows
         for char in sorted(self.english_freq.keys()):
             eng_freq = self.english_freq[char]
             inp_freq = input_freq.get(char, 0)
-            diff = abs(eng_freq - inp_freq)
-            result += f"{char:<10}{eng_freq:<10.2f}{inp_freq:<10.2f}{diff:<10.2f}\n"
+            diff_val = abs(eng_freq - inp_freq)
+            tree.insert('', 'end', values=(char, f"{eng_freq:.2f}", f"{inp_freq:.2f}", f"{diff_val:.2f}"))
         
-        result += f"\nOverall difference: {diff:.2f}\n"
+        # Add overall results label
+        result_text = f"Overall difference: {diff:.2f}\n"
+        result_text += "This text closely matches English letter frequency." if is_close_match else \
+                      "This text does not closely match English letter frequency."
+        ttk.Label(results_window, text=result_text).pack(pady=10)
+        
+        # Return values for other functions to use
+        summary = f"Frequency Analysis: Overall difference = {diff:.2f}"
         if is_close_match:
-            result += "This text closely matches English letter frequency."
-        else:
-            result += "This text does not closely match English letter frequency."
-        
-        return result, is_close_match
+            summary += " (Matches English frequency)"
+        return summary, is_close_match
 
 if __name__ == "__main__":
     root = tk.Tk()
     app = CryptoToolGUI(root)
     root.mainloop()
+
 
 
