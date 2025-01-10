@@ -229,6 +229,7 @@ class CryptoToolGUI:
             if hasattr(self, 'rearranged_frame'):
                 rearranged = matrix[:, [int(x) for x in self.order_entry.get().split(',')]]
                 self.output_matrix(rearranged, self.rearranged_output)
+
     def show_single_double_operations(self):
         if self.single_double_window is None or not self.single_double_window.winfo_exists():
             self.single_double_window = tk.Toplevel(self.master)
@@ -483,6 +484,7 @@ class CryptoToolGUI:
         def crack_thread():
             start_time = time.time()
             attempts = 0
+            matches_found = 0
             
             try:
                 selected_dict = self.dict_var.get()  # Get selected dictionary file
@@ -503,24 +505,25 @@ class CryptoToolGUI:
                 
                 for phrase in target_phrases:
                     if phrase in plaintext:
-                        end_time = time.time()
+                        matches_found += 1
                         highlighted_plaintext = self.highlight_match(plaintext, phrase)
-                        result = f"\nFound a match! Key: {key}\n"
+                        result = f"\nFound match #{matches_found}! Key: {key}\n"
                         result += f"Attempts: {attempts}\n"
-                        result += f"Time taken: {end_time - start_time:.2f} seconds\n"
+                        result += f"Time elapsed: {time.time() - start_time:.2f} seconds\n"
                         result += f"Found match: {phrase}\n"
                         result += f"Plaintext: {highlighted_plaintext}\n"
                         self.output_text.insert("1.0", result)
-                        return
+                        break  # Break inner loop to avoid duplicate matches for same key
                 
                 if attempts % 1000 == 0:
                     self.progress_var.set((i / total_words) * 100)
                     self.master.update_idletasks()
             
             end_time = time.time()
-            result = f"\nUnable to crack. Attempts: {attempts}\n"
-            result += f"Time taken: {end_time - start_time:.2f} seconds\n"
-            self.output_text.insert("1.0", result)
+            summary = f"\nCracking complete. Total matches found: {matches_found}\n"
+            summary += f"Total attempts: {attempts}\n"
+            summary += f"Total time taken: {end_time - start_time:.2f} seconds\n"
+            self.output_text.insert("1.0", summary)
 
         threading.Thread(target=crack_thread).start()
 
