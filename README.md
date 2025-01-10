@@ -26,6 +26,14 @@ A variety of commonly used string analysis and manipulation is supported:
 - Frequency Analysis
 	- It determines if the cypher character frequency is similar to English. 
 
+## Columnar Transposition
+
+Added the ability to present the chypertext in a matrix form (row and column).
+- Columnar transposition
+  	- Allows to rearrange the column order based on their indices.
+  	- The output can be read from left column to right or viceversa.
+![image](https://github.com/user-attachments/assets/51a74632-f072-437e-b960-89bffc2a3695)
+
 ## Vigenère Brute Force attacks
 
 Using a large dictionary of English words (words_alpha.txt), it will brute force until one of the input plain text words (**USE CAPS**)  is found on the plaintext.
