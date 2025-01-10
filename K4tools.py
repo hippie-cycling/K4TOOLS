@@ -1,5 +1,6 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
+import numpy as np
 import time
 import threading
 from functools import lru_cache
@@ -25,7 +26,12 @@ class CryptoToolGUI:
         self.vigenere_menu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="Vigenere Tools", menu=self.vigenere_menu)
 
-            # Create About menu
+        # Create Matrix menu
+        self.matrix_menu = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label="Columnar Transposition", menu=self.matrix_menu)
+        self.matrix_menu.add_command(label="Columnar Operations", command=self.show_letter_matrix)
+
+        # Create About menu
         self.about_menu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="About", menu=self.about_menu)
         self.about_menu.add_command(label="About K4 Tools", command=self.show_about)
@@ -33,6 +39,7 @@ class CryptoToolGUI:
         # Create windows for different operations
         self.single_double_window = None
         self.vigenere_window = None
+        self.letter_matrix_window = None
 
         # Add menu items
         self.operations_menu.add_command(label="Single/Double Input Operations", 
@@ -65,7 +72,163 @@ class CryptoToolGUI:
         label = ttk.Label(about_window, text=about_text, wraplength=350, justify='left')
         label.pack(padx=20, pady=20)
 
+    def show_letter_matrix(self):
+        if self.letter_matrix_window is None or not self.letter_matrix_window.winfo_exists():
+            self.letter_matrix_window = tk.Toplevel(self.master)
+            self.letter_matrix_window.title("Columnar Transposition")
+            
+            # Create main frames
+            left_frame = ttk.Frame(self.letter_matrix_window)
+            left_frame.grid(row=0, column=0, sticky='nsew', padx=5, pady=5)
+            
+            right_frame = ttk.Frame(self.letter_matrix_window)
+            right_frame.grid(row=0, column=1, sticky='nsew', padx=5, pady=5)
+            
+            # Configure grid weights
+            self.letter_matrix_window.grid_columnconfigure(0, weight=1)
+            self.letter_matrix_window.grid_columnconfigure(1, weight=1)
+            
+            # Input section
+            input_frame = self.create_labeled_frame(left_frame, "Input", 0, 0)
+            self.input_text = self.create_text_widget(input_frame, "Cyphertext", 1, 0, width=50, height=3)
+            
+            # Matrix controls
+            control_frame = self.create_labeled_frame(left_frame, "Controls", 1, 0)
+            ttk.Label(control_frame, text="Rows:").grid(row=0, column=0, padx=5)
+            self.rows_entry = ttk.Entry(control_frame, width=5)
+            self.rows_entry.grid(row=0, column=1, padx=5)
+            
+            ttk.Label(control_frame, text="Columns:").grid(row=0, column=2, padx=5)
+            self.cols_entry = ttk.Entry(control_frame, width=5)
+            self.cols_entry.grid(row=0, column=3, padx=5)
+            
+            ttk.Button(control_frame, text="Update", 
+                      command=self.update_matrix).grid(row=0, column=4, padx=5)
+            
+            # Column order section
+            order_frame = self.create_labeled_frame(left_frame, "Columnar Transposition Order", 2, 0)
+            self.order_entry = ttk.Entry(order_frame, width=30)
+            self.order_entry.grid(row=0, column=0, padx=5)
+            self.order_entry.insert(0, "0,3,6,2,5,1,4")  # Default order
+            
+            ttk.Button(order_frame, text="Rearrange", 
+                      command=self.rearrange_columns).grid(row=0, column=1, padx=5)
+            
+            # Matrix displays
+            matrix_frame = self.create_labeled_frame(right_frame, "Original", 0, 0)
+            self.display_frame = ttk.Frame(matrix_frame)
+            self.display_frame.grid(row=0, column=0, padx=5, pady=5)
+            
+            rearranged_frame = self.create_labeled_frame(right_frame, "Transposed", 1, 0)
+            self.rearranged_frame = ttk.Frame(rearranged_frame)
+            self.rearranged_frame.grid(row=0, column=0, padx=5, pady=5)
+            
+            # Output section
+            # Output section with direction control
+            output_frame = self.create_labeled_frame(left_frame, "Output", 3, 0)
+            self.matrix_output = self.create_text_widget(output_frame, "Original", 1, 0, width=50, height=3)
+            self.rearranged_output = self.create_text_widget(output_frame, "Transposed", 3, 0, width=50, height=3)
+            
+            # Add direction control radio buttons
+            direction_frame = ttk.LabelFrame(output_frame, text="Column Reading Direction")
+            direction_frame.grid(row=4, column=0, padx=5, pady=5)
+            
+            self.right_to_left = tk.BooleanVar(value=True)
+            ttk.Radiobutton(direction_frame, text="Right to Left", 
+                          variable=self.right_to_left, value=True,
+                          command=lambda: self.update_outputs(self.get_current_matrix())).pack(side=tk.LEFT, padx=5)
+            ttk.Radiobutton(direction_frame, text="Left to Right", 
+                          variable=self.right_to_left, value=False,
+                          command=lambda: self.update_outputs(self.get_current_matrix())).pack(side=tk.LEFT, padx=5)
 
+    def update_matrix(self):
+        try:
+            rows = int(self.rows_entry.get())
+            cols = int(self.cols_entry.get())
+            input_text = self.input_text.get("1.0", 'end-1c').upper()
+            
+            if not input_text.isalpha():
+                raise ValueError("Please enter only letters")
+            if rows <= 0 or cols <= 0:
+                raise ValueError("Rows and columns must be positive")
+                
+            # Create and display matrices
+            matrix = np.full((rows, cols), ' ', dtype=str)
+            for i, char in enumerate(input_text):
+                if i >= rows * cols:
+                    break
+                matrix[i // cols, i % cols] = char
+                
+            self.display_matrix(matrix, self.display_frame)
+            self.output_matrix(matrix, self.matrix_output)
+            
+        except ValueError as e:
+            messagebox.showerror("Error", str(e))
+
+    def rearrange_columns(self):
+        try:
+            order = [int(x) for x in self.order_entry.get().split(',')]
+            matrix = self.get_current_matrix()
+            
+            if len(order) != matrix.shape[1]:
+                raise ValueError("Invalid column order")
+                
+            rearranged = matrix[:, order]
+            self.display_matrix(rearranged, self.rearranged_frame)
+            self.output_matrix(rearranged, self.rearranged_output)
+            
+        except ValueError as e:
+            messagebox.showerror("Error", str(e))
+
+    def get_current_matrix(self):
+        rows = int(self.rows_entry.get())
+        cols = int(self.cols_entry.get())
+        input_text = self.input_text.get("1.0", 'end-1c').upper()
+        
+        matrix = np.full((rows, cols), ' ', dtype=str)
+        for i, char in enumerate(input_text):
+            if i >= rows * cols:
+                break
+            matrix[i // cols, i % cols] = char
+        return matrix
+
+    def display_matrix(self, matrix, frame):
+        for widget in frame.winfo_children():
+            widget.destroy()
+            
+        rows, cols = matrix.shape
+        for i in range(rows):
+            for j in range(cols):
+                ttk.Label(frame, text=matrix[i,j], width=2, 
+                         relief="solid").grid(row=i, column=j, padx=1, pady=1)
+                
+    def output_matrix(self, matrix, output_widget):
+            output_widget.delete('1.0', tk.END)
+            output = ''
+            rows, cols = matrix.shape
+                            
+            # Create output based on direction
+            if self.right_to_left.get():
+                # Right to left (original behavior)
+                for j in range(cols-1, -1, -1):
+                    for i in range(rows):
+                        if matrix[i,j] != ' ':
+                            output += matrix[i,j]
+            else:
+                # Left to right
+                for j in range(cols):
+                    for i in range(rows):
+                        if matrix[i,j] != ' ':
+                            output += matrix[i,j]
+                            
+            output_widget.insert('1.0', output)
+
+    def update_outputs(self, matrix):
+            """Helper function to update both output widgets"""
+            self.output_matrix(matrix, self.matrix_output)
+            if hasattr(self, 'rearranged_frame'):
+                rearranged = matrix[:, [int(x) for x in self.order_entry.get().split(',')]]
+                self.output_matrix(rearranged, self.rearranged_output)
     def show_single_double_operations(self):
         if self.single_double_window is None or not self.single_double_window.winfo_exists():
             self.single_double_window = tk.Toplevel(self.master)
