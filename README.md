@@ -30,9 +30,10 @@ A variety of commonly used string analysis and manipulation is supported:
 
 Added the ability to present the chypertext in a matrix form (row and column).
 - Columnar transposition
-  	- Allows to rearrange the column order based on their indices.
-  	- The output can be read from left column to right or viceversa.
-![image](https://github.com/user-attachments/assets/51a74632-f072-437e-b960-89bffc2a3695)
+  	- Ability to rearrange the column order based on their indices.
+- The output from the original matrix and the transposed one is presented wither left column to right or viceversa depending on user preference.
+  
+![image](https://github.com/user-attachments/assets/8ba84f74-d06a-45b0-b393-e5c424578470)
 
 ## Vigenère Brute Force attacks
 
