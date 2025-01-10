@@ -13,7 +13,7 @@ Base 5 mod 26 addition of two strings is also supported.
 
 A variety of commonly used string analysis and manipulation is supported:
 - IoC (English).
-	- Tells you the IoC of the input cypher.
+	- Tells you the IoC of the input cypher. It will notify if the value is close to English
 - Transposition.
 	- Transposes each character (n) positions based on the provided alphabet.
 - Reversion.
@@ -31,17 +31,17 @@ A variety of commonly used string analysis and manipulation is supported:
 Added the ability to present the chypertext in a matrix form (row and column).
 - Columnar transposition
   	- Ability to rearrange the column order based on their indices.
-- The output from the original matrix and the transposed one is presented wither left column to right or viceversa depending on user preference.
+- The output string from the original matrix and the transposed one is presented either from leftmost column to right or viceversa depending on user preference.
   
 ![image](https://github.com/user-attachments/assets/8ba84f74-d06a-45b0-b393-e5c424578470)
 
 ## Vigenère Brute Force attacks
 
-Using a large dictionary of English words (words_alpha.txt), it will brute force until one of the input plain text words (**USE CAPS**)  is found on the plaintext.
+Using a couple large dictionary of English words (words_alpha.txt and words.txt), it will brute force until one of the input plain text words is found on the plaintext.
 
 The vigenère alphabet can be defined by the user.
 
-The brute force succesfully decripts, for example, K2 in under 4 seconds.
+The brute force succesfully decripts, for example, K2 in under 4 seconds knowing one of the plaintext words.
 
 	K2: EMUFPHZLRFAXYUSDJKZLDKRNSHGNFIVJYQTQUXQBQVYUVLLTREVJYQTMKYRDMFD
 	Alphabet: KRYPTOSABCDEFGHIJLMNQUVWXZ
@@ -52,7 +52,7 @@ The brute force succesfully decripts, for example, K2 in under 4 seconds.
 			Found match: SHADING
 			Plaintext: BETWEENSUBTLE*SHADING*ANDTHEABSENCEOFLIGHTLIESTHENUANCEOFIQLUSION
 	
-A brute force based on IoC is also implemented, if the string is close to the English IoC (between 0.055 and 0.07), it will be output for further analysis. (The values can be tweeked in the K4TOOLS.py crack_thread function.)
+A brute force based on IoC is also implemented, if the string is close to the user defined range (recommended to use the English IoC (between 0.06 and 0.07)), it will be output for further analysis.
 
 **Useful strings** (strings.txt) contains relevant strings for quick copy paste into the GUI.
 
