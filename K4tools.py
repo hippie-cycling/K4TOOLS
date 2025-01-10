@@ -45,9 +45,13 @@ class CryptoToolGUI:
         self.output_frame.grid(row=0, column=0, padx=5, pady=5, sticky='nsew')
         
         self.output_text = self.create_text_widget(self.output_frame, "", 0, 0, 
-                                                 font=("Hack NF", 8), width=120, height=30)
+                                                 font=("Hack NF", 8), width=140, height=30)
         
         self.setup_text_tags()
+
+        # Add clear button below output text
+        clear_button = ttk.Button(self.output_frame, text="Clear Output", command=self.clear_output)
+        clear_button.grid(row=1, column=0, pady=5)
 
     def show_about(self):
         about_window = tk.Toplevel(self.master)
@@ -70,8 +74,8 @@ class CryptoToolGUI:
             # Single input frame
             self.single_input_frame = self.create_labeled_frame(self.single_double_window, 
                                                               "Single Input Operations", 0, 0)
-            self.input_text = self.create_text_widget(self.single_input_frame, "Cyphertext", 1, 0)
-            self.alphabet_text = self.create_text_widget(self.single_input_frame, "Alphabet", 4, 0)
+            self.input_text = self.create_text_widget(self.single_input_frame, "Cyphertext", 1, 0, width=80)
+            self.alphabet_text = self.create_text_widget(self.single_input_frame, "Alphabet", 4, 0, width=80)
             
             # Set default cypher
             self.input_text.insert("1.0", "OBKRUOXOGHULBSOLIFBBWFLRVQQPRNGKSSOTWTQSJQSSEKZZWATJKLUDIAWINFBNYPVTTMZFPKWGDKZXTJCDIGKUHUAUEKCAR")
@@ -84,12 +88,14 @@ class CryptoToolGUI:
             # Double input frame
             self.double_input_frame = self.create_labeled_frame(self.single_double_window, 
                                                               "Double Input Operations", 0, 1)
-            self.input1_text = self.create_text_widget(self.double_input_frame, "Input 1", 1, 0)
-            self.input2_text = self.create_text_widget(self.double_input_frame, "Input 2", 3, 0)
+            self.input1_text = self.create_text_widget(self.double_input_frame, "Cyphertext", 1, 0, width=80)
+            self.input2_text = self.create_text_widget(self.double_input_frame, "Key", 3, 0, width=80)
             
+            self.input1_text.insert("1.0", "OBKRUOXOGHULBSOLIFBBWFLRVQQPRNGKSSOTWTQSJQSSEKZZWATJKLUDIAWINFBNYPVTTMZFPKWGDKZXTJCDIGKUHUAUEKCAR")
+
             self.operation = tk.StringVar()
             self.create_dropdown(self.double_input_frame, "Operation", self.operation, 
-                               ["AND", "OR", "NOT", "NAND", "NOR", "XOR"], 6, 0)
+                               ["AND", "OR", "NOT", "NAND", "NOR", "XOR"], 5, 0)
 
             # Create buttons
             self.create_button(self.single_input_frame, "IoC", self.ioc, 2, 0)
@@ -109,7 +115,7 @@ class CryptoToolGUI:
             self.bf_progress_var = tk.DoubleVar()
             self.bf_progress_bar = ttk.Progressbar(self.double_input_frame, 
                                                  variable=self.bf_progress_var, maximum=100)
-            self.bf_progress_bar.grid(row=7, column=0, columnspan=4, padx=5, pady=5, sticky='ew')
+            self.bf_progress_bar.grid(row=7, column=0, columnspan=5, padx=5, pady=5, sticky='ew')
 
     def show_vigenere_operations(self):
         if self.vigenere_window is None or not self.vigenere_window.winfo_exists():
@@ -133,7 +139,7 @@ class CryptoToolGUI:
             
             self.vigenere_alphabet = self.create_text_widget(
                 self.vigenere_frame, 
-                "Alphabet (can be changed)", 
+                "Alphabet", 
                 3, 
                 0,
                 width=100,
@@ -234,23 +240,40 @@ class CryptoToolGUI:
 
     def create_text_widget(self, parent, label_text, row, column, **kwargs):
         if label_text:
-            ttk.Label(parent, text=label_text, font=("Hack NF", 10)).grid(row=row-1, column=column, padx=5)
+            ttk.Label(parent, text=label_text, font=("Hack NF", 8)).grid(row=row-1, column=column, padx=5)
         
         # Default values
         default_kwargs = {
             'height': 5,  # Increased height
             'width': 50,
-            'font': ("Hack NF", 8)  # Increased font size
+            'font': ("Hack NF", 8),  # Increased font size
         }
         # Update default values with any provided kwargs
         default_kwargs.update(kwargs)
         
         text_widget = tk.Text(parent, **default_kwargs)
         text_widget.grid(row=row, column=column, padx=5, columnspan=8, sticky='nsew')
+        
+        # Add horizontal scrollbar
+        h_scrollbar = ttk.Scrollbar(parent, orient='horizontal', command=text_widget.xview)
+        h_scrollbar.grid(row=row+1, column=column, columnspan=8, sticky='ew')
+        text_widget.config(xscrollcommand=h_scrollbar.set)
+        
+        # Add uppercase conversion
+        def to_upper(event=None):
+            content = text_widget.get("1.0", 'end-1c')  # Use end-1c to exclude final newline
+            upper_content = content.upper()
+            if content != upper_content:
+                text_widget.delete("1.0", tk.END)
+                text_widget.insert("1.0", upper_content)
+            return "break"
+        
+        text_widget.bind('<FocusOut>', to_upper)
+        
         return text_widget
 
     def create_dropdown(self, parent, label_text, variable, values, row, column):
-        ttk.Label(parent, text=label_text, font=("Cambria", 10)).grid(row=row-1, column=column, padx=5)
+        ttk.Label(parent, text=label_text, font=("Hack NF", 8)).grid(row=row-1, column=column, padx=5)
         ttk.OptionMenu(parent, variable, values[0], *values).grid(row=row, column=column)
 
     def create_button(self, parent, text, command, row, column):
@@ -514,11 +537,11 @@ class CryptoToolGUI:
         numerator = sum(count * (count - 1) for count in char_counts.values())
         denominator = n * (n - 1)
         ic = numerator / denominator if denominator != 0 else 0
-
-        self.output_text.insert("1.0", f"\n{input_text}")
+        
         if 0.059 <= ic <= 0.07:
             self.output_text.insert("1.0", "\nPOTENTIAL ENGLISH TEXT DETECTED!", "highlight")
         self.output_text.insert("1.0", f"\nIoC (English): {ic:.4f} \nTarget: 0.0667")
+        self.output_text.insert("1.0", f"\n{input_text}")
 
     def reverse(self):
         input_text = self.input_text.get("1.0", 'end-1c')
@@ -527,22 +550,25 @@ class CryptoToolGUI:
 
     def boolean_operations(self):
         op = self.operation.get()
-        cypher = self.input1_text.get("1.0", 'end-1c')
-        dictionary = self.input2_text.get("1.0", 'end-1c')
+        input1 = self.input1_text.get("1.0", 'end-1c')
+        input2 = self.input2_text.get("1.0", 'end-1c')
+        
+        # Repeat input2 to match length of input1
+        repetitions = (len(input1) + len(input2) - 1) // len(input2)
+        input2 = (input2 * repetitions)[:len(input1)]
 
         ascii_dict = {
-        'A': '00001', 'B': '00010', 'C': '00011', 'D': '00100', 'E': '00101',
-        'F': '00110', 'G': '00111', 'H': '01000', 'I': '01001', 'J': '01010',
-        'K': '01011', 'L': '01100', 'M': '01101', 'N': '01110', 'O': '01111',
-        'P': '10000', 'Q': '10001', 'R': '10010', 'S': '10011', 'T': '10100',
-        'U': '10101', 'V': '10110', 'W': '10111', 'X': '11000', 'Y': '11001',
-        'Z': '11010', '?': '11111'
-    }
-        # Convert ascii_dict to use directly in the loop below
+            'A': '00001', 'B': '00010', 'C': '00011', 'D': '00100', 'E': '00101',
+            'F': '00110', 'G': '00111', 'H': '01000', 'I': '01001', 'J': '01010',
+            'K': '01011', 'L': '01100', 'M': '01101', 'N': '01110', 'O': '01111',
+            'P': '10000', 'Q': '10001', 'R': '10010', 'S': '10011', 'T': '10100',
+            'U': '10101', 'V': '10110', 'W': '10111', 'X': '11000', 'Y': '11001',
+            'Z': '11010', '?': '11111'
+        }
 
         # Convert the input strings to binary
-        binary1 = ''.join(ascii_dict[char] for char in cypher)
-        binary2 = ''.join(ascii_dict[char] for char in dictionary)
+        binary1 = ''.join(ascii_dict[char] for char in input1)
+        binary2 = ''.join(ascii_dict[char] for char in input2)
 
         # Perform boolean operations on the binary strings
         if op == "XOR":
@@ -570,23 +596,30 @@ class CryptoToolGUI:
             else:
                 result_text += next(key for key, value in ascii_dict.items() if value == binary1[i:i+5])
 
+        
+        self.output_text.insert("1.0", f"\nRepeated key: {input2}")
         self.output_text.insert("1.0", f"\nCalculated {op} output: {result_text}")
 
     def base5_addition(self):
-        cypher = self.input1_text.get("1.0", 'end-1c')
-        dictionary = self.input2_text.get("1.0", 'end-1c')
+        input1 = self.input1_text.get("1.0", 'end-1c')
+        input2 = self.input2_text.get("1.0", 'end-1c')
+        
+        # Repeat input2 to match length of input1
+        repetitions = (len(input1) + len(input2) - 1) // len(input2)
+        input2 = (input2 * repetitions)[:len(input1)]
 
         base5_dict = {chr(65+i): f'{i//5}{i%5}' for i in range(26)}
         base5_dict['X'] = '00'  # Special case for 'W'
 
-        num1 = ''.join(base5_dict[char] for char in cypher.upper() if char in base5_dict)
-        num2 = ''.join(base5_dict[char] for char in dictionary.upper() if char in base5_dict)
+        num1 = ''.join(base5_dict[char] for char in input1.upper() if char in base5_dict)
+        num2 = ''.join(base5_dict[char] for char in input2.upper() if char in base5_dict)
 
         result = ''.join(str((int(d1) + int(d2)) % 5) for d1, d2 in zip(num1, num2))
 
         reverse_base5_dict = {v: k for k, v in base5_dict.items()}
         letters = ''.join(reverse_base5_dict.get(result[i:i+2], '?') for i in range(0, len(result), 2))
 
+        self.output_text.insert("1.0", f"\nRepeated key: {input2}")
         self.output_text.insert("1.0", f"\nBase 5 mod 26 addition: {letters}")
 
     def clear_output(self):
@@ -683,7 +716,7 @@ class CryptoToolGUI:
                     self.bf_progress_var.set((i / total_words) * 100)
                     self.master.update_idletasks()
             
-            self.output_text.insert("1.0", f"\nBrute force completed. Found {matches_found} matches.\n")
+            self.output_text.insert("1.0", f"Brute force completed. Found {matches_found} matches.\n")
             self.bf_progress_var.set(100)
 
         threading.Thread(target=bruteforce_thread).start()
