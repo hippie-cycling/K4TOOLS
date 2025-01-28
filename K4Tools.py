@@ -1,7 +1,6 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 import numpy as np
 import re
-import threading
 import time
 from collections import Counter
 from functools import lru_cache
@@ -91,11 +90,11 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
     def create_text_widget(self, parent, label_text, **kwargs):
         if label_text:
             label = QtWidgets.QLabel(label_text, parent)
-            label.setFont(QtGui.QFont("Hack NF", 10))
+            label.setFont(QtGui.QFont("Verdana", 10))
             parent.layout().addWidget(label)
 
         text_widget = QtWidgets.QTextEdit(parent)
-        text_widget.setFont(QtGui.QFont("Hack NF", 10))
+        text_widget.setFont(QtGui.QFont("Verdana", 10))
         text_widget.setFixedHeight(kwargs.get('height', 100))
         text_widget.setFixedWidth(kwargs.get('width', 600))
         parent.layout().addWidget(text_widget)
@@ -251,18 +250,47 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
             output_layout.addWidget(self.rearranged_output)
             
             # Direction controls
-            direction_group = QtWidgets.QGroupBox("Column Reading Direction")
-            direction_layout = QtWidgets.QHBoxLayout(direction_group)
-            direction_layout.setSpacing(20)
+            direction_group = QtWidgets.QGroupBox("Reading Direction")
+            direction_layout = QtWidgets.QVBoxLayout(direction_group)
+            direction_layout.setSpacing(10)
             
+            # Row-wise vs Column-wise reading
+            reading_mode_group = QtWidgets.QGroupBox("Reading Mode")
+            reading_mode_layout = QtWidgets.QHBoxLayout(reading_mode_group)
+            self.row_wise_radio = QtWidgets.QRadioButton("Row-wise")
+            self.column_wise_radio = QtWidgets.QRadioButton("Column-wise")
+            self.column_wise_radio.setChecked(True)  # Default to column-wise
+            reading_mode_layout.addWidget(self.row_wise_radio)
+            reading_mode_layout.addWidget(self.column_wise_radio)
+            direction_layout.addWidget(reading_mode_group)
+            
+            # Column reading direction (left-to-right or right-to-left)
+            column_direction_group = QtWidgets.QGroupBox("Column Reading Direction")
+            column_direction_layout = QtWidgets.QHBoxLayout(column_direction_group)
             self.right_to_left = QtWidgets.QRadioButton("Right to Left")
             self.right_to_left.setChecked(True)
-            self.right_to_left.toggled.connect(lambda: self.update_outputs(self.get_current_matrix()))
-            direction_layout.addWidget(self.right_to_left)
-            
             left_to_right = QtWidgets.QRadioButton("Left to Right")
+            column_direction_layout.addWidget(self.right_to_left)
+            column_direction_layout.addWidget(left_to_right)
+            direction_layout.addWidget(column_direction_group)
+            
+            # Row reading direction (top-to-bottom or bottom-to-top)
+            row_direction_group = QtWidgets.QGroupBox("Row Reading Direction")
+            row_direction_layout = QtWidgets.QHBoxLayout(row_direction_group)
+            self.top_to_bottom_radio = QtWidgets.QRadioButton("Top to Bottom")
+            self.top_to_bottom_radio.setChecked(True)  # Default to top-to-bottom
+            self.bottom_to_top_radio = QtWidgets.QRadioButton("Bottom to Top")
+            row_direction_layout.addWidget(self.top_to_bottom_radio)
+            row_direction_layout.addWidget(self.bottom_to_top_radio)
+            direction_layout.addWidget(row_direction_group)
+            
+            # Connect signals to update outputs when options change
+            self.row_wise_radio.toggled.connect(lambda: self.update_outputs(self.get_current_matrix()))
+            self.column_wise_radio.toggled.connect(lambda: self.update_outputs(self.get_current_matrix()))
+            self.right_to_left.toggled.connect(lambda: self.update_outputs(self.get_current_matrix()))
             left_to_right.toggled.connect(lambda: self.update_outputs(self.get_current_matrix()))
-            direction_layout.addWidget(left_to_right)
+            self.top_to_bottom_radio.toggled.connect(lambda: self.update_outputs(self.get_current_matrix()))
+            self.bottom_to_top_radio.toggled.connect(lambda: self.update_outputs(self.get_current_matrix()))
             
             output_layout.addWidget(direction_group)
             left_layout.addWidget(output_group)
@@ -807,19 +835,32 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
 
     def rearrange_columns(self):
         try:
-            order = [int(x) for x in self.order_entry.text().split(',')]
-            matrix = self.get_current_matrix()
+            # Get the column order from the input
+            order_text = self.order_entry.text().strip()
+            if not order_text:
+                raise ValueError("Column order cannot be empty. Please enter a valid order.")
             
-            if not self.input_text.toPlainText().strip():
-                raise ValueError("Input text cannot be empty")
+            # Convert the order text to a list of integers
+            order = [int(x) for x in order_text.split(',')]
+            
+            # Get the current matrix
+            matrix = self.get_current_matrix()
+            if matrix is None:
+                raise ValueError("No matrix present. Please update the matrix first.")
+            
+            # Validate the column order
             if len(order) != matrix.shape[1]:
-                raise ValueError("Invalid column order")
-                
+                raise ValueError(f"Invalid column order. Expected {matrix.shape[1]} columns, but got {len(order)}.")
+            
+            # Rearrange the columns
             rearranged = matrix[:, order]
+            
+            # Display the rearranged matrix
             self.display_matrix(rearranged, self.rearranged_frame)
             self.output_matrix(rearranged, self.rearranged_output)
             
         except ValueError as e:
+            # Show the error message to the user
             QtWidgets.QMessageBox.critical(self, "Error", str(e))
 
     def get_current_matrix(self):
@@ -863,21 +904,37 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
         output_widget.clear()
         output = ''
         rows, cols = matrix.shape
-                            
-        # Create output based on direction
-        if self.right_to_left.isChecked():
-            # Right to left (original behavior)
-            for j in range(cols-1, -1, -1):
+
+        # Determine reading direction (row-wise or column-wise)
+        if self.row_wise_radio.isChecked():
+            # Row-wise reading
+            if self.bottom_to_top_radio.isChecked():
+                # Bottom to top
+                for i in range(rows-1, -1, -1):
+                    for j in range(cols):
+                        if matrix[i, j] != ' ':
+                            output += matrix[i, j]
+            else:
+                # Top to bottom (default)
                 for i in range(rows):
-                    if matrix[i,j] != ' ':
-                        output += matrix[i,j]
+                    for j in range(cols):
+                        if matrix[i, j] != ' ':
+                            output += matrix[i, j]
         else:
-            # Left to right
-            for j in range(cols):
-                for i in range(rows):
-                    if matrix[i,j] != ' ':
-                        output += matrix[i,j]
-                            
+            # Column-wise reading (existing behavior)
+            if self.right_to_left.isChecked():
+                # Right to left
+                for j in range(cols-1, -1, -1):
+                    for i in range(rows):
+                        if matrix[i, j] != ' ':
+                            output += matrix[i, j]
+            else:
+                # Left to right (default)
+                for j in range(cols):
+                    for i in range(rows):
+                        if matrix[i, j] != ' ':
+                            output += matrix[i, j]
+
         output_widget.setPlainText(output)
 
     def update_outputs(self, matrix):
@@ -885,10 +942,20 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
         if matrix is None:
             QtWidgets.QMessageBox.critical(self, "Error", "No matrix present.")
             return
+        
         self.output_matrix(matrix, self.matrix_output)
+        
         if hasattr(self, 'rearranged_frame'):
-            rearranged = matrix[:, [int(x) for x in self.order_entry.text().split(',')]]
-            self.output_matrix(rearranged, self.rearranged_output)
+            try:
+                # Attempt to rearrange the matrix based on user input
+                rearranged = matrix[:, [int(x) for x in self.order_entry.text().split(',')]]
+                self.output_matrix(rearranged, self.rearranged_output)
+            except IndexError as e:
+                # If an IndexError occurs, show an error message to the user
+                QtWidgets.QMessageBox.critical(self, "Error", f"Index out of bounds: {e}\nPlease check the order of indices.")
+            except ValueError as e:
+                # If a ValueError occurs (e.g., invalid input), show an error message to the user
+                QtWidgets.QMessageBox.critical(self, "Error", f"Invalid input: {e}\nPlease enter valid indices separated by commas.")
 
     @lru_cache(maxsize=None)
     def get_alphabet(self):
@@ -1587,6 +1654,3 @@ if __name__ == "__main__":
     window = CryptoToolGUI()
     window.show()
     sys.exit(app.exec_())
-
-
-
