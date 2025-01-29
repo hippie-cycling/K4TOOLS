@@ -177,8 +177,8 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
             # 1. Input Section
             input_group = QtWidgets.QGroupBox("Input")
             input_layout = QtWidgets.QVBoxLayout(input_group)
-            self.input_text = self.create_text_widget(input_group, "")
-            input_layout.addWidget(self.input_text)
+            self.input_text_matrix = self.create_text_widget(input_group, "")
+            input_layout.addWidget(self.input_text_matrix)
             left_layout.addWidget(input_group)
             
             # 2. Matrix Controls
@@ -813,7 +813,7 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
         try:
             rows = int(self.rows_entry.text())
             cols = int(self.cols_entry.text())
-            input_text = self.input_text.toPlainText().upper()
+            input_text = self.input_text_matrix.toPlainText().upper()
             
             if not input_text.isalpha():
                 raise ValueError("Please enter only letters")
@@ -870,7 +870,7 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
         except ValueError:
             QtWidgets.QMessageBox.critical(self, "Error", "Rows and columns must be valid integers.")
             return None
-        input_text = self.input_text.toPlainText().upper()
+        input_text = self.input_text_matrix.toPlainText().upper()
         
         matrix = np.full((rows, cols), ' ', dtype=str)
         for i, char in enumerate(input_text):
@@ -891,7 +891,7 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
         for i in range(rows):
             for j in range(cols):
                 label = QtWidgets.QLabel(matrix[i, j], frame)
-                label.setFixedSize(20, 20)
+                label.setFixedSize(30, 30)
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 label.setStyleSheet("border: 1px solid #5A5A5A;")
                 grid_layout.addWidget(label, i, j)
