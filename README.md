@@ -5,17 +5,17 @@ A compact package where the user can do a variety of **string manipulation and o
 
 ## Two string calculations
 
-It is suspected that K4 might be a two layer cipher. XOR (based on 5 bit ASCII) has been implemented as it is a promising reversible operation that can be easily performed on paper. It also supports the main non-reversible boolean operations (AND, OR, NAND...).
+It is suspected that K4 might be a two layer cipher. XOR (based on 8 bit ASCII) has been implemented as it is a promising reversible operation that can be easily performed on paper. It also supports the main non-reversible boolean operations (AND, OR, NAND...).
 
 Base 5 mod 26 subtraction of two strings is also supported, another reversible operation. 
 
-Note that the results from the previus operations are mapped to (A-Z) ASCII or (65-90) decimal.
+Note that the results from the previous operations are mapped to (A-Z) ASCII or (65-90) decimal.
 
 ## Single string analysis and manipulation
 
 A variety of commonly used string analysis and manipulation is supported:
 - IoC (English).
-	- Tells you the IoC of the input cypher. It will notify if the value is close to English (0.065)
+	- Tells you the IoC of the input cypher. It will notify if the value is close to English (0.065), which might indicate that the text has been transposed.
 - Transposition.
 	- Transposes each character (n) positions based on the provided alphabet.
 - Reversion.
@@ -26,7 +26,7 @@ A variety of commonly used string analysis and manipulation is supported:
 - String Matrix
 	- Splits and combines the string based on its divisors, it outputs all possible results.
 - Frequency Analysis
-	- It determines if the cypher character frequency is similar to English. 
+	- It determines if the cypher character frequency is similar to English, which might indicate that the text has been transposed.
 
 ## Columnar Transposition
 
