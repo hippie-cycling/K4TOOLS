@@ -409,7 +409,8 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
             
             double_buttons = [
                 ("Calculate", self.boolean_operations),
-                ("Base 5 Addition", self.base5_addition),
+                ("ASCII Subtraction", self.base5_addition),
+                ("Modular Subtraction", self.modular_subtraction),
                 ("XOR Brute Force (IoC)", self.xor_bruteforce_ioc),
                 ("XOR Brute Force (Freq)", self.xor_bruteforce_freq)
             ]
@@ -1399,6 +1400,47 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
         self.output_text.clear()  # Clear previous output
         self.output_text.insertPlainText(f"\nRepeated key: {input2_mapped}")
         self.output_text.insertPlainText(f"\nBase 5 mod 26 subtraction: {letters}")
+
+    def modular_subtraction(self):
+            # Get input strings
+            input1 = self.input1_text.toPlainText().strip()
+            input2 = self.input2_text.toPlainText().strip()
+
+            # Check if the second input is empty
+            if not input2:
+                QtWidgets.QMessageBox.critical(self, "Error", "Key cannot be empty")
+                return
+
+            # Repeat input2 to match the length of input1
+            repetitions = (len(input1) + len(input2) - 1) // len(input2)
+            input2 = (input2 * repetitions)[:len(input1)]
+
+            # Function to map characters to the range 65-90 (A-Z) and handle out-of-range chars
+            def map_to_ascii_range(char):
+                char = char.upper()
+                if not ('A' <= char <= 'Z'):  # More Pythonic check
+                    char = chr((ord(char) - ord('A')) % 26 + ord('A')) # Modulo 26 for wrap-around
+                return char
+
+            # Map input characters to the range 65-90
+            input1_mapped = ''.join(map_to_ascii_range(char) for char in input1)
+            input2_mapped = ''.join(map_to_ascii_range(char) for char in input2)
+
+            # Perform alphabet position based subtraction (mod 26)
+            result_letters = []
+            for char1, char2 in zip(input1_mapped, input2_mapped):
+                pos1 = ord(char1) - ord('A')
+                pos2 = ord(char2) - ord('A')
+                diff = (pos1 - pos2) % 26  # Modulo 26 for wrap-around (important!)
+                result_letters.append(chr(diff + ord('A')))  # Convert back to character
+
+            result_string = "".join(result_letters)
+
+
+            # Display the results
+            self.output_text.clear()  # Clear previous output
+            self.output_text.insertPlainText(f"\nRepeated key: {input2_mapped}")
+            self.output_text.insertPlainText(f"\nAlphabetical Subtraction (mod 26): {result_string}")
 
     def clear_output(self):
         self.output_text.clear()
