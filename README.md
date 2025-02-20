@@ -5,11 +5,7 @@ A compact package where the user can do a variety of **string manipulation and o
 
 ## Two string calculations
 
-It is suspected that K4 might be a two layer cipher. XOR (based on 8 bit ASCII) has been implemented as it is a promising reversible operation that can be easily performed on paper. It also supports the main non-reversible boolean operations (AND, OR, NAND...).
-
-Base 5 mod 26 subtraction of two strings is also supported, another reversible operation. 
-
-Note that the results from the previous operations are mapped to (A-Z) ASCII or (65-90) decimal.
+It is suspected that K4 might be a two layer cipher. Two main reversible operations are implemented: XOR (based on 5 bit decimal alphabet position) and Modular subtraction (based on ASCII).
 
 ## Single string analysis and manipulation
 
