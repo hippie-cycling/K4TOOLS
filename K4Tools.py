@@ -1,4 +1,5 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
+from pathlib import Path
 import numpy as np
 import re
 import time
@@ -15,12 +16,6 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
 
         # Create menu bar
         self.menubar = self.menuBar()
-        
-        # Add View menu with theme toggle
-        self.view_menu = self.menubar.addMenu("View")
-        self.theme_action = QtWidgets.QAction("Dark Mode", self, checkable=True)
-        self.theme_action.triggered.connect(self.toggle_theme)
-        self.view_menu.addAction(self.theme_action)
 
         # Create Operations menu
         self.operations_menu = self.menubar.addMenu("String Operations")
@@ -53,9 +48,8 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
         self.output_text = self.create_text_widget(self.output_frame, "", width=1000, height=900)
     
         # Add clear button below output text
-        clear_button = QtWidgets.QPushButton("🗑", self.output_frame)
-        clear_button.setStyleSheet("border: none; background: transparent;")
-        clear_button.setFixedSize(30, 30)
+        clear_button = QtWidgets.QPushButton("Clear", self.output_frame)
+        clear_button.setStyleSheet("border: 2px solid black; background: white;")
         
         # Create a layout to place the button at the top right
         button_layout = QtWidgets.QHBoxLayout()
@@ -65,10 +59,7 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
         self.output_layout.addLayout(button_layout)
         clear_button.clicked.connect(self.clear_output)
         self.output_layout.addWidget(clear_button)
-        
-        # Configure theme after all widgets are created
-        self.configure_theme()
-
+    
         # Set initial size of the main window
         self.resize(1000, 1000)
         # Ensure main window is accessible after opening dialogs
@@ -90,34 +81,20 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
     def create_text_widget(self, parent, label_text, **kwargs):
         if label_text:
             label = QtWidgets.QLabel(label_text, parent)
-            label.setFont(QtGui.QFont("Verdana", 10))
+            label.setFont(QtGui.QFont("Monaco", 10))
             parent.layout().addWidget(label)
 
         text_widget = QtWidgets.QTextEdit(parent)
-        text_widget.setFont(QtGui.QFont("Verdana", 10))
+        text_widget.setFont(QtGui.QFont("Monaco", 10))
         text_widget.setFixedHeight(kwargs.get('height', 100))
-        text_widget.setFixedWidth(kwargs.get('width', 600))
+        text_widget.setFixedWidth(kwargs.get('width', 800))
         parent.layout().addWidget(text_widget)
-
-        # Add uppercase conversion
-        def to_upper():
-            content = text_widget.toPlainText()
-            upper_content = content.upper()
-            if content != upper_content:
-                text_widget.setPlainText(upper_content)
-
-        original_focus_out_event = text_widget.focusOutEvent
-        
-        def new_focus_out_event(event):
-            to_upper()
-            original_focus_out_event(event)
-        text_widget.focusOutEvent = new_focus_out_event
 
         return text_widget
 
     def create_dropdown(self, parent, label_text, values):
         label = QtWidgets.QLabel(label_text, parent)
-        label.setFont(QtGui.QFont("Hack NF", 8))
+        label.setFont(QtGui.QFont("Monaco", 8))
         parent.layout().addWidget(label)
 
         dropdown = QtWidgets.QComboBox(parent)
@@ -153,7 +130,7 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
         if self.letter_matrix_window is None:
             self.letter_matrix_window = QtWidgets.QDialog(self)
             self.letter_matrix_window.setWindowTitle("Columnar Transposition")
-            self.letter_matrix_window.setMinimumWidth(800)
+            self.letter_matrix_window.setMinimumWidth(900)
             
             # Main layout with proper spacing
             main_layout = QtWidgets.QHBoxLayout(self.letter_matrix_window)
@@ -214,7 +191,7 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
             
             rearrange_button = QtWidgets.QPushButton("Transpose")
             rearrange_button.clicked.connect(self.rearrange_columns)
-            rearrange_button.setFixedWidth(100)
+            rearrange_button.setFixedWidth(150)
             order_layout.addWidget(rearrange_button)
             
             left_layout.addWidget(order_group)
@@ -231,23 +208,6 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
             self.rearranged_frame = QtWidgets.QFrame()
             transposed_layout.addWidget(self.rearranged_frame)
             right_layout.addWidget(transposed_group)
-            
-            # 5. Output Section
-            output_group = QtWidgets.QGroupBox("Output")
-            output_layout = QtWidgets.QVBoxLayout(output_group)
-            output_layout.setSpacing(10)
-            
-            # Original output
-            original_output_label = QtWidgets.QLabel("Original:")
-            output_layout.addWidget(original_output_label)
-            self.matrix_output = self.create_text_widget(output_group, "")
-            output_layout.addWidget(self.matrix_output)
-            
-            # Transposed output
-            transposed_output_label = QtWidgets.QLabel("Transposed:")
-            output_layout.addWidget(transposed_output_label)
-            self.rearranged_output = self.create_text_widget(output_group, "")
-            output_layout.addWidget(self.rearranged_output)
             
             # Direction controls
             direction_group = QtWidgets.QGroupBox("Reading Direction")
@@ -292,6 +252,23 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
             self.top_to_bottom_radio.toggled.connect(lambda: self.update_outputs(self.get_current_matrix()))
             self.bottom_to_top_radio.toggled.connect(lambda: self.update_outputs(self.get_current_matrix()))
             
+            # 5. Output Section
+            output_group = QtWidgets.QGroupBox("Output")
+            output_layout = QtWidgets.QVBoxLayout(output_group)
+            output_layout.setSpacing(10)
+            
+            # Original output
+            original_output_label = QtWidgets.QLabel("Original:")
+            output_layout.addWidget(original_output_label)
+            self.matrix_output = self.create_text_widget(output_group, "")
+            output_layout.addWidget(self.matrix_output)
+            
+            # Transposed output
+            transposed_output_label = QtWidgets.QLabel("Transposed:")
+            output_layout.addWidget(transposed_output_label)
+            self.rearranged_output = self.create_text_widget(output_group, "")
+            output_layout.addWidget(self.rearranged_output)
+
             output_layout.addWidget(direction_group)
             left_layout.addWidget(output_group)
             
@@ -323,7 +300,7 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
             widgets = []
             for row, label in enumerate(labels):
                 label_widget = QtWidgets.QLabel(label)
-                label_widget.setFont(QtGui.QFont("Hack NF", 10))
+                label_widget.setFont(QtGui.QFont("Monaco", 10))
                 single_input_layout.addWidget(label_widget, row * 2, 0, 1, 2)
                 
                 text_widget = self.create_text_widget(self.single_input_frame, "")
@@ -378,7 +355,7 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
             widgets = []
             for row, label in enumerate(labels):
                 label_widget = QtWidgets.QLabel(label)
-                label_widget.setFont(QtGui.QFont("Hack NF", 10))
+                label_widget.setFont(QtGui.QFont("Monaco", 10))
                 double_input_layout.addWidget(label_widget, row * 2, 0, 1, 2)
                 
                 text_widget = self.create_text_widget(self.double_input_frame, "")
@@ -388,19 +365,6 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
             self.input1_text, self.input2_text = widgets
             self.input1_text.setPlainText("OBKRUOXOGHULBSOLIFBBWFLRVQQPRNGKSSOTWTQSJQSSEKZZWATJKLUDIAWINFBNYPVTTMZFPKWGDKZXTJCDIGKUHUAUEKCAR")
             
-            # Add operation dropdown
-            op_container = QtWidgets.QWidget()
-            op_layout = QtWidgets.QHBoxLayout(op_container)
-            op_layout.setSpacing(10)
-            double_input_layout.addWidget(op_container, 4, 0, 1, 2)
-            
-            op_layout.addWidget(QtWidgets.QLabel("Operation:"))
-            self.operation = QtWidgets.QComboBox()
-            self.operation.addItems(["AND", "OR", "NOT", "NAND", "NOR", "XOR"])
-            self.operation.setMaximumWidth(120)
-            op_layout.addWidget(self.operation)
-            op_layout.addStretch()
-            
             # Create double input buttons
             double_button_container = QtWidgets.QWidget()
             double_button_grid = QtWidgets.QGridLayout(double_button_container)
@@ -408,7 +372,7 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
             double_input_layout.addWidget(double_button_container, 5, 0, 1, 2)
             
             double_buttons = [
-                ("Calculate", self.boolean_operations),
+                ("XOR", self.xor),
                 ("ASCII Subtraction", self.base5_addition),
                 ("Modular Subtraction", self.modular_subtraction),
                 ("XOR Brute Force (IoC)", self.xor_bruteforce_ioc),
@@ -425,7 +389,6 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
             self.bf_progress_bar = QtWidgets.QProgressBar()
             self.bf_progress_bar.setMaximum(100)
             self.bf_progress_bar.setTextVisible(False)  # Hide the percentage text
-            self.bf_progress_bar.setStyleSheet("QProgressBar::chunk { background-color: #d36ad3; }")
             double_input_layout.addWidget(self.bf_progress_bar, 6, 0, 1, 2)
         
         self.single_double_window.show()
@@ -453,7 +416,7 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
             
             for row, label in enumerate(labels):
                 label_widget = QtWidgets.QLabel(label)
-                label_widget.setFont(QtGui.QFont("Hack NF", 10))
+                label_widget.setFont(QtGui.QFont("Monaco", 10))
                 vigenere_layout.addWidget(label_widget, row * 2, 0, 1, 2)
                 
                 text_widget = self.create_text_widget(self.vigenere_frame, "")
@@ -526,289 +489,9 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
             self.progress_bar = QtWidgets.QProgressBar()
             self.progress_bar.setMaximum(100)
             self.progress_bar.setTextVisible(False)  # Hide the percentage text
-            self.progress_bar.setStyleSheet("QProgressBar::chunk { background-color: #d36ad3; }")
             main_layout.addWidget(self.progress_bar)
         
         self.vigenere_window.show()
-    
-    def configure_theme(self):
-        # Create custom styles to match the tracker interface
-        if self.theme_action.isChecked():  # Dark mode
-            self.setStyleSheet("""
-            /*
-            COLOR_DARK     = #191919
-            COLOR_MEDIUM   = #2b2b2b
-            COLOR_MEDLIGHT = #5A5A5A
-            COLOR_LIGHT    = #DDDDDD
-            COLOR_ACCENT   = #ce93d8
-            */
-
-            * {
-                background: #2b2b2b;
-                color: #DDDDDD;
-                border: 1px solid #5A5A5A;
-            }
-
-            QWidget::item:selected {
-                background: #ce93d8;
-            }
-
-            QCheckBox, QRadioButton {
-                border: none;
-            }
-
-            QRadioButton::indicator, QCheckBox::indicator {
-                width: 10px;
-                height: 10px;
-            }
-
-            QRadioButton::indicator::unchecked, QCheckBox::indicator::unchecked {
-                border: 1px solid #5A5A5A;
-                background: none;
-            }
-
-            QRadioButton::indicator:unchecked:hover, QCheckBox::indicator:unchecked:hover {
-                border: 1px solid #DDDDDD;
-            }
-
-            QRadioButton::indicator::checked, QCheckBox::indicator::checked {
-                border: 1px solid #5A5A5A;
-                background: #ce93d8;
-            }
-
-            QRadioButton::indicator:checked:hover, QCheckBox::indicator:checked:hover {
-                border: 1px solid #DDDDDD;
-                background: #ce93d8;
-            }
-
-            QGroupBox {
-                margin-top: 6px;
-            }
-
-            QGroupBox::title {
-                top: -7px;
-            }
-
-            QScrollBar {
-                border: 1px solid #5A5A5A;
-                background: #2b2b2b;
-            }
-
-            QScrollBar:horizontal {
-                height: 15px;
-                margin: 0px 0px 0px 32px;
-            }
-
-            QScrollBar:vertical {
-                width: 15px;
-                margin: 32px 0px 0px 0px;
-            }
-
-            QScrollBar::handle {
-                background: #353535;
-                border: 1px solid #5A5A5A;
-            }
-
-            QScrollBar::handle:horizontal {
-                border-width: 0px 1px 0px 1px;
-            }
-
-            QScrollBar::handle:vertical {
-                border-width: 1px 0px 1px 0px;
-            }
-
-            QScrollBar::handle:horizontal {
-                min-width: 20px;
-            }
-
-            QScrollBar::handle:vertical {
-                min-height: 20px;
-            }
-
-            QScrollBar::add-line, QScrollBar::sub-line {
-                background: #353535;
-                border: 1px solid #5A5A5A;
-                subcontrol-origin: margin;
-            }
-
-            QScrollBar::add-line {
-                position: absolute;
-            }
-
-            QScrollBar::add-line:horizontal {
-                width: 15px;
-                subcontrol-position: left;
-                left: 15px;
-            }
-
-            QScrollBar::add-line:vertical {
-                height: 15px;
-                subcontrol-position: top;
-                top: 15px;
-            }
-
-            QScrollBar::sub-line:horizontal {
-                width: 15px;
-                subcontrol-position: top left;
-            }
-
-            QScrollBar::sub-line:vertical {
-                height: 15px;
-                subcontrol-position: top;
-            }
-
-            QScrollBar:left-arrow, QScrollBar::right-arrow, QScrollBar::up-arrow, QScrollBar::down-arrow {
-                border: 1px solid #5A5A5A;
-                width: 3px;
-                height: 3px;
-            }
-
-            QScrollBar::add-page, QScrollBar::sub-page {
-                background: none;
-            }
-
-            QAbstractButton:hover {
-                background: #353535;
-            }
-
-            QAbstractButton:pressed {
-                background: #353535;
-            }
-
-            QAbstractItemView {
-                show-decoration-selected: 1;
-                selection-background-color: #ce93d8;
-                selection-color: #DDDDDD;
-                alternate-background-color: #353535;
-            }
-
-            QHeaderView {
-                border: 1px solid #5A5A5A;
-            }
-
-            QHeaderView::section {
-                background: #2b2b2b;
-                border: 1px solid #5A5A5A;
-                padding: 4px;
-            }
-
-            QHeaderView::section:selected, QHeaderView::section::checked {
-                background: #353535;
-            }
-
-            QTableView {
-                gridline-color: #5A5A5A;
-            }
-
-            QTabBar {
-                margin-left: 2px;
-            }
-
-            QTabBar::tab {
-                border-radius: 0px;
-                padding: 4px;
-                margin: 4px;
-            }
-
-            QTabBar::tab:selected {
-                background: #353535;
-            }
-
-            QComboBox::down-arrow {
-                border: 1px solid #5A5A5A;
-                background: #353535;
-            }
-
-            QComboBox::drop-down {
-                border: 1px solid #5A5A5A;
-                background: #353535;
-            }
-
-            QComboBox::down-arrow {
-                width: 3px;
-                height: 3px;
-                border: 1px solid #5A5A5A;
-            }
-
-            QAbstractSpinBox {
-                padding-right: 15px;
-            }
-
-            QAbstractSpinBox::up-button, QAbstractSpinBox::down-button {
-                border: 1px solid #5A5A5A;
-                background: #353535;
-                subcontrol-origin: border;
-            }
-
-            QAbstractSpinBox::up-arrow, QAbstractSpinBox::down-arrow {
-                width: 3px;
-                height: 3px;
-                border: 1px solid #5A5A5A;
-            }
-
-            QSlider {
-                border: none;
-            }
-
-            QSlider::groove:horizontal {
-                height: 5px;
-                margin: 4px 0px 4px 0px;
-            }
-
-            QSlider::groove:vertical {
-                width: 5px;
-                margin: 0px 4px 0px 4px;
-            }
-
-            QSlider::handle {
-                border: 1px solid #5A5A5A;
-                background: #353535;
-            }
-
-            QSlider::handle:horizontal {
-                width: 15px;
-                margin: -4px 0px -4px 0px;
-            }
-
-            QSlider::handle:vertical {
-                height: 15px;
-                margin: 0px -4px 0px -4px;
-            }
-
-            QSlider::add-page:vertical, QSlider::sub-page:horizontal {
-                background: #ce93d8;
-            }
-
-            QSlider::sub-page:vertical, QSlider::add-page:horizontal {
-                background: #353535;
-            }
-
-            QLabel {
-                border: none;
-            }
-
-            QProgressBar {
-                text-align: center;
-            }
-
-            QProgressBar::chunk {
-                width: 1px;
-                background-color: #ce93d8;
-            }
-
-            QMenu::separator {
-                background: #353535;
-            }
-
-            QTextEdit { 
-                selection-background-color: #ce93d8;
-            }
-            """)
-        else:  # Light mode
-            self.setStyleSheet("")
-    
-    def toggle_theme(self):
-        self.configure_theme()
 
     def update_matrix(self):
         try:
@@ -1276,7 +959,7 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
             else:
                 shifted_str += char
 
-        self.output_text.insertPlainText(f"\n{shifted_str}\n")
+        self.output_text.insertPlainText(f"\nPadded result: {shifted_str}\n")
 
     def ioc(self):
         input_text = self.input_text.toPlainText()
@@ -1298,59 +981,6 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
         input_text = self.input_text.toPlainText()
         reversed_text = input_text[::-1]
         self.output_text.insertPlainText(f"\nReversed output: {reversed_text}")
-
-    def boolean_operations(self):
-        op = self.operation.currentText()
-        input1 = self.input1_text.toPlainText().strip().upper()
-        input2 = self.input2_text.toPlainText().strip().upper()
-
-        # Validate inputs
-        if not input1:
-            QtWidgets.QMessageBox.critical(self, "Error", "Input 1 cannot be empty")
-            return
-        if not input2 and op != "NOT":
-            QtWidgets.QMessageBox.critical(self, "Error", "Input 2 cannot be empty for this operation")
-            return
-
-        # Repeat input2 to match the length of input1 (if necessary)
-        if op != "NOT":
-            repetitions = (len(input1) + len(input2) - 1) // len(input2)
-            input2 = (input2 * repetitions)[:len(input1)]
-
-        result_text = ''
-        for i in range(len(input1)):
-            char1 = input1[i]
-            char2 = input2[i] if op != "NOT" else None
-
-            # Get ASCII values
-            ascii1 = ord(char1)
-            ascii2 = ord(char2) if char2 else 0
-
-            # Perform boolean operation
-            if op == "XOR":
-                result = ascii1 ^ ascii2
-            elif op == "AND":
-                result = ascii1 & ascii2
-            elif op == "OR":
-                result = ascii1 | ascii2
-            elif op == "NOT":
-                result = ~ascii1 & 0x7F  # Invert and mask to 7 bits
-            elif op == "NOR":
-                result = ~(ascii1 | ascii2) & 0x7F
-            elif op == "NAND":
-                result = ~(ascii1 & ascii2) & 0x7F
-            else:
-                result = 0
-
-            # Map result to uppercase range (65-90)
-            if result < 65 or result > 90:
-                result = 65 + (result % 26)
-
-            # Convert result back to character
-            result_text += chr(result)
-
-        self.output_text.insertPlainText(f"\nRepeated key: {input2}")
-        self.output_text.insertPlainText(f"\nCalculated {op} output: {result_text}")
 
     def base5_addition(self):
         # Get input strings
@@ -1400,6 +1030,115 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
         self.output_text.clear()  # Clear previous output
         self.output_text.insertPlainText(f"\nRepeated key: {input2_mapped}")
         self.output_text.insertPlainText(f"\nBase 5 mod 26 subtraction: {letters}")
+    
+    def base5_addition(self):
+        # Get input strings
+        input1 = self.input1_text.toPlainText().strip()
+        input2 = self.input2_text.toPlainText().strip()
+
+        # Check if the second input is empty
+        if not input2:
+            QtWidgets.QMessageBox.critical(self, "Error", "Key cannot be empty")
+            return
+
+        # Repeat input2 to match the length of input1
+        repetitions = (len(input1) + len(input2) - 1) // len(input2)
+        input2 = (input2 * repetitions)[:len(input1)]
+
+        # Function to map characters to the range 65-90 (A-Z)
+        def map_to_ascii_range(char):
+            char = char.upper()
+            if ord(char) < 65 or ord(char) > 90:
+                char = chr((ord(char) - 65) % 26 + 65)
+            return char
+
+        # Map input characters to the range 65-90
+        input1_mapped = ''.join(map_to_ascii_range(char) for char in input1)
+        input2_mapped = ''.join(map_to_ascii_range(char) for char in input2)
+
+        # Base-5 mapping for A-Z
+        base5_dict = {chr(65 + i): f'{i // 5}{i % 5}' for i in range(26)}
+
+        # Convert input strings to base-5
+        num1 = ''.join(base5_dict[char] for char in input1_mapped if char in base5_dict)
+        num2 = ''.join(base5_dict[char] for char in input2_mapped if char in base5_dict)
+
+        # Perform base-5 subtraction
+        result = []
+        for d1, d2 in zip(num1, num2):
+            diff = (int(d1) - int(d2)) % 5  # Handle negative results with modulo 5
+            result.append(str(diff))
+
+        result = ''.join(result)
+
+        # Reverse mapping from base-5 to letters
+        reverse_base5_dict = {v: k for k, v in base5_dict.items()}
+        letters = ''.join(reverse_base5_dict.get(result[i:i + 2], '?') for i in range(0, len(result), 2))
+
+        # Display the results
+        self.output_text.clear()  # Clear previous output
+        self.output_text.insertPlainText(f"\nRepeated key: {input2_mapped}")
+        self.output_text.insertPlainText(f"\nBase 5 mod 26 subtraction: {letters}")
+
+    def xor(self):
+    # Get input strings
+        ciphertext = self.input1_text.toPlainText().strip()
+        key = self.input2_text.toPlainText().strip()
+
+        # Check if the key is empty
+        if not key:
+            QtWidgets.QMessageBox.critical(self, "Error", "Key cannot be empty")
+            return
+
+        # Repeat key to match ciphertext length
+        repetitions = (len(ciphertext) + len(key) - 1) // len(key)
+        repeated_key = (key * repetitions)[:len(ciphertext)]
+
+        def letter_to_5bit(char):
+            """Convert A-Z to 5-bit binary value (0-25)"""
+            val = (ord(char) - ord('A')) % 26
+            return format(val, '05b')
+
+        def binary_to_letter(binary):
+            """Convert 5-bit binary back to letter A-Z"""
+            val = int(binary, 2) % 26
+            return chr(val + ord('A'))
+
+        # Perform XOR operation character by character
+        result = []
+        debug_info = []  # For storing intermediate calculations
+        
+        for c, k in zip(ciphertext, repeated_key):
+            # Convert to 5-bit binary
+            c_bin = letter_to_5bit(c)
+            k_bin = letter_to_5bit(k)
+            
+            # Perform XOR on binary strings
+            xor_result = ''
+            for c_bit, k_bit in zip(c_bin, k_bin):
+                xor_result += '1' if c_bit != k_bit else '0'
+            
+            # Check for null result (00000)
+            if xor_result == '00000':
+                result_char = c  # Use cipher letter for null result
+            else:
+                result_char = binary_to_letter(xor_result)
+                
+            result.append(result_char)
+            
+            # Store debug info
+            debug_info.append(f"{c}({c_bin}) ⊕ {k}({k_bin}) = {xor_result} -> {result_char}")
+
+        result_text = ''.join(result)
+
+        # Display the results
+        self.output_text.clear()
+        self.output_text.insertPlainText(f"Input text: {ciphertext}\n")
+        self.output_text.insertPlainText(f"Repeated key: {repeated_key}\n")
+        self.output_text.insertPlainText(f"XOR result: {result_text}\n")
+        self.output_text.insertPlainText("\nDetailed binary operations:\n")
+        for debug_line in debug_info:
+            self.output_text.insertPlainText(debug_line + "\n")
 
     def modular_subtraction(self):
             # Get input strings
@@ -1513,10 +1252,10 @@ class CryptoToolGUI(QtWidgets.QMainWindow):
                         repetitions = (len(input_text) + len(word) - 1) // len(word)
                         repeated_key = (word * repetitions)[:len(input_text)]
 
-                        result = self.parent_class.xor_operation(input_text, word)
+                        result = CryptoToolGUI.xor_operation(input_text, repeated_key)
                         ioc = self.parent_class.calculate_ioc(result)
 
-                        if 0.055 <= ioc <= 0.07:
+                        if 0.065 <= ioc <= 0.07:
                             matches_found += 1
                             self.result.emit(f"\nMatch found with key: {word}")
                             self.result.emit(f"\nKey repeated: {repeated_key}")
@@ -1691,8 +1430,18 @@ class LetterFrequencyAnalyzer:
             summary += " (Matches English frequency)"
         return summary, is_close_match
 
+def load_stylesheet():
+    try:
+        style_path = Path('theme.qss')  # Make sure this matches your stylesheet file name
+        return style_path.read_text()
+    except Exception as e:
+        print(f"Error loading stylesheet: {e}")
+        return ""
+
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     window = CryptoToolGUI()
     window.show()
+    stylesheet = load_stylesheet()
+    app.setStyleSheet(stylesheet)
     sys.exit(app.exec_())

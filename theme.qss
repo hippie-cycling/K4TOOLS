@@ -1,0 +1,164 @@
+/*
+Theme Colors
+COLOR_BG        = #FFFFFF
+COLOR_FG        = #000000
+COLOR_BORDER    = #000000
+*/
+
+QWidget {
+    background: white;
+    color: black;
+    border: 2px solid black;
+    font-family: "SF Mono", "Monaco", monospace;
+}
+
+QWidget::item:selected {
+    background: black;
+    color: white;
+}
+
+QCheckBox, QRadioButton {
+    border: none;
+    background: transparent;
+}
+
+QRadioButton::indicator, QCheckBox::indicator {
+    width: 14px;
+    height: 14px;
+    border: 2px solid black;
+    background: white;
+}
+
+QRadioButton::indicator:checked, QCheckBox::indicator:checked {
+    background: black;
+}
+
+QGroupBox {
+    margin-top: 10px;
+    border: 2px solid black;
+    border-radius: 0;
+}
+
+QGroupBox::title {
+    top: -15px;
+    left: 8px;
+    padding: 0 4px;
+    background: white;
+}
+
+QScrollBar {
+    background: white;
+    border: 2px solid black;
+}
+
+QScrollBar:horizontal {
+    height: 16px;
+}
+
+QScrollBar:vertical {
+    width: 16px;
+}
+
+QScrollBar::handle {
+    background: white;
+    border: 2px solid black;
+}
+
+QScrollBar::handle:horizontal {
+    min-width: 24px;
+}
+
+QScrollBar::handle:vertical {
+    min-height: 24px;
+}
+
+QScrollBar::add-line, QScrollBar::sub-line {
+    background: white;
+    border: 2px solid black;
+}
+
+QAbstractButton {
+    padding: 4px;
+    border: 2px solid black;
+    background: white;
+}
+
+QAbstractButton:pressed {
+    background: black;
+    color: white;
+}
+
+QHeaderView::section {
+    background: white;
+    border: 2px solid black;
+    padding: 8px;
+}
+
+QTabBar::tab {
+    border: 2px solid black;
+    padding: 4px 8px;
+    margin: 2px;
+    background: white;
+}
+
+QTabBar::tab:selected {
+    background: black;
+    color: white;
+}
+
+QComboBox {
+    border: 2px solid black;
+    padding: 4px;
+}
+
+QComboBox::drop-down {
+    border: 2px solid black;
+    background: white;
+}
+
+QSlider {
+    border: none;
+}
+
+QSlider::groove:horizontal {
+    height: 6px;
+    background: white;
+    border: 2px solid black;
+}
+
+QSlider::groove:vertical {
+    width: 6px;
+    background: white;
+    border: 2px solid black;
+}
+
+QSlider::handle {
+    background: white;
+    border: 2px solid black;
+    width: 16px;
+    height: 16px;
+    margin: -6px 0;
+}
+
+QTextEdit {
+    border: 2px solid black;
+    background: white;
+}
+
+QTextEdit::selection {
+    background: black;
+    color: white;
+}
+
+QProgressBar::chunk {
+    background-color: black; /* Color of the bars */
+    width: 4px; /* Width of each bar */
+    margin-right: 4px; /* Spacing between bars */
+    border: none;
+}
+
+QProgressBar {
+    background-color: white; /* Background of the progress bar itself */
+    border: 2px solid black; /* Remove default progress bar border if desired */
+}
+
